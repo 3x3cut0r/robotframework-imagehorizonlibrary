@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=40.8.0","wheel"]
+
+[project]
+name = "robotframework-imagehorizonlibrary"
+version = "1.1"
+description = "fork of https://github.com/eficode/robotframework-imagehorizonlibrary with some pr merges"
+authors = [
+  { name="Julian Reith", email="julianreith@gmx.de" }
+]
+license = { text = "MIT" }
+readme = "README.rst"
+requires-python = ">=3.6"
+
+dependencies = [
+  "robotframework>=2.8",
+  "matplotlib",
+  "Pillow",
+  "pyautogui",
+  "pygetwindow",
+  "pymsgbox",
+  "pyperclip",
+  "pyrect",
+  "PyScreeze",
+  "pywinauto",
+  "scikit-image",
+  "opencv-python-headless"
+]
+
+[project.urls]
+Homepage = "https://github.com/eficode/robotframework-imagehorizonlibrary"
