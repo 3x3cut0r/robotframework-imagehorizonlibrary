@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=40.8.0","wheel"]
+requires = ["setuptools>=68.0.0","wheel"]
 
 [project]
 name = "robotframework-imagehorizonlibrary"
@@ -10,7 +10,7 @@ authors = [
 ]
 license = { text = "MIT" }
 readme = "README.rst"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 
 dependencies = [
   "robotframework>=2.8",
