@@ -2,7 +2,7 @@
 
 from .image_debugger_model import UILocatorModel
 from .image_debugger_view import UILocatorView
-from .template_matching_strategies import Pyautogui, Skimage
+from .template_matching_strategies import Pyautogui, Cv2
 from .image_manipulation import ImageContainer, ImageFormat
 from pathlib import Path
 import os, glob
@@ -30,14 +30,14 @@ class UILocatorController:
         """Initialise default values for the view widgets."""
         self.view.ref_dir_path.set(self.image_horizon_instance.reference_folder)
         self.view.scale_conf_lvl_ag.set(0.99)
-        self.view.scale_sigma_skimage.set(1.0)
-        self.view.scale_low_thres_skimage.set(0.1)
-        self.view.scale_high_thres_skimage.set(0.3)
-        self.view.scale_conf_lvl_skimage.set(0.99)
+        self.view.scale_sigma_edge.set(1.0)
+        self.view.scale_low_thres_edge.set(0.1)
+        self.view.scale_high_thres_edge.set(0.3)
+        self.view.scale_conf_lvl_edge.set(0.99)
         self.view.matches_found.set("None")
         self.view.btn_edge_detec_debugger["state"] = "disabled"
         self.view.btn_run_pyautogui["state"] = "disabled"
-        self.view.btn_run_skimage["state"] = "disabled"
+        self.view.btn_run_edge["state"] = "disabled"
         self.view.btn_copy_strategy_snippet["state"] = "disabled"
         self.view.hint_msg.set("Ready")
         self.view.processing_done = False
@@ -80,7 +80,7 @@ class UILocatorController:
         """Reload available images and reset the UI state."""
         self.load_needle_image_names()
         self.view.btn_run_pyautogui["state"] = "disabled"
-        self.view.btn_run_skimage["state"] = "disabled"
+        self.view.btn_run_edge["state"] = "disabled"
         self.reset_results()
         self.reset_images()
         self.view._ready()
@@ -102,7 +102,7 @@ class UILocatorController:
         )
 
         self.view.btn_run_pyautogui["state"] = "normal"
-        self.view.btn_run_skimage["state"] = "normal"
+        self.view.btn_run_edge["state"] = "normal"
 
     def _take_screenshot(self):
         """Capture a screenshot of the current desktop."""
@@ -138,8 +138,8 @@ class UILocatorController:
     def on_click_run_edge_detec_strategy(self):
         """Execute recognition using the edge detection strategy."""
         self.image_horizon_instance.set_strategy('edge')
-        self.image_horizon_instance.edge_low_threshold = float(self.view.scale_low_thres_skimage.get())
-        self.image_horizon_instance.edge_high_threshold = float(self.view.scale_high_thres_skimage.get())
+        self.image_horizon_instance.edge_low_threshold = float(self.view.scale_low_thres_edge.get())
+        self.image_horizon_instance.edge_high_threshold = float(self.view.scale_high_thres_edge.get())
         if self.image_horizon_instance.edge_high_threshold < self.image_horizon_instance.edge_low_threshold:
             self.reset_results()
             self.reset_images()
@@ -147,12 +147,12 @@ class UILocatorController:
             self.view.processing_done=False
             return
         
-        self.image_horizon_instance.confidence = float(self.view.scale_conf_lvl_skimage.get())
-        self.image_horizon_instance.edge_sigma = float(self.view.scale_sigma_skimage.get())
+        self.image_horizon_instance.confidence = float(self.view.scale_conf_lvl_edge.get())
+        self.image_horizon_instance.edge_sigma = float(self.view.scale_sigma_edge.get())
         self.image_container._haystack_image_orig_size = self._take_screenshot()
 
         
-        matcher = Skimage(self.image_container, self.image_horizon_instance)
+        matcher = Cv2(self.image_container, self.image_horizon_instance)
         self.coord = matcher.find_num_of_matches()
         matcher.highlight_matches()
 
@@ -185,7 +185,7 @@ class UILocatorController:
         self.view.btn_copy_strategy_snippet["state"] = "normal"
         self.view.processing_done = True
 
-    def on_click_plot_results_skimage(self):
+    def on_click_plot_results_edge(self):
         """Display detailed edge detection results in a matplotlib window."""
         title = (
             f"{self.view.matches_found.get()} matches (confidence: "

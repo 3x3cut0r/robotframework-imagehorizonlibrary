@@ -1,7 +1,4 @@
 """Utility functions for platform detection and optional dependencies."""
-
-import sys
-from importlib import util
 from platform import platform, architecture
 from subprocess import call
 
@@ -35,11 +32,5 @@ def has_cv():
     try:
         import cv2  # noqa: F401
         return True
-    except Exception:
-        return False
-
-def has_skimage():
-    try:
-        return "skimage" in sys.modules or util.find_spec("skimage") is not None
     except Exception:
         return False

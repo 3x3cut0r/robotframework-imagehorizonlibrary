@@ -30,11 +30,6 @@ except ImportError:
         "use Python and verify that Tkinter works."
     )
 
-try:
-    import skimage as sk
-except Exception:
-    sk = None
-
 from . import utils
 from .interaction import *
 from .recognition import *
@@ -147,7 +142,7 @@ class ImageHorizonLibrary(
 
     "Essential characteristics" of an image are those areas where neighbouring pixels show a
     sharp change of brightness, better known as "edges". [https://en.wikipedia.org/wiki/Edge_detection|Edge detection]
-    is the process of finding the edges in an image, done by [https://scikit-image.org/|scikit-image] in this library.
+    is the process of finding the edges in an image, done by [https://opencv.org/|OpenCV] in this library.
 
     As a brief digression, edge detection is a multi-step process:
 
@@ -179,9 +174,6 @@ class ImageHorizonLibrary(
     resolutions), enable multi-scale search with ``Set Scale Range`` and
     disable it with ``Reset Scale Range``.
 
-    To use strategy ``edge``, the [https://scikit-image.org|scikit-image] Python package must be installed separately:
-
-    | $ python3 -m pip install scikit-image
 
     = Performance =
 
@@ -261,7 +253,6 @@ class ImageHorizonLibrary(
         self.is_linux = utils.is_linux()
         self.has_retina = utils.has_retina()
         self.has_cv = utils.has_cv()
-        self.has_skimage = utils.has_skimage()
         self.confidence = confidence
         self.initial_confidence = confidence
         self._class_bases = inspect.getmro(self.__class__)
@@ -313,7 +304,7 @@ class ImageHorizonLibrary(
         if strategy == "default":
             self.strategy_instance = _StrategyPyautogui(self)
         elif strategy == "edge":
-            self.strategy_instance = _StrategySkimage(self)
+            self.strategy_instance = _StrategyCv2(self)
             self.edge_sigma = edge_sigma
             self.edge_low_threshold = edge_low_threshold
             self.edge_high_threshold = edge_high_threshold

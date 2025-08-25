@@ -8,14 +8,9 @@ import pyautogui as ag
 from robot.api import logger as LOGGER
 
 try:
-    from skimage.feature import match_template, peak_local_max, canny
-    from skimage.color import rgb2gray
-    from skimage.io import imread, imsave
-    from skimage.filters import threshold_otsu
-    from skimage.transform import resize
-except Exception:  # pragma: no cover - graceful fallback when skimage is missing
-    match_template = peak_local_max = canny = None
-    rgb2gray = imread = imsave = threshold_otsu = resize = None
+    import cv2
+except Exception:  # pragma: no cover - graceful fallback when cv2 is missing
+    cv2 = None
 
 import numpy as np
 
@@ -632,17 +627,17 @@ class _StrategyPyautogui:
         return location
 
 
-class _StrategySkimage:
-    """Image matching strategy using scikit-image edge detection."""
+class _StrategyCv2:
+    """Image matching strategy using OpenCV edge detection."""
 
-    _SKIMAGE_DEFAULT_CONFIDENCE = 0.99
+    _CV_DEFAULT_CONFIDENCE = 0.99
 
     def __init__(self, image_horizon_instance):
         """Store reference to the owning ImageHorizonLibrary instance."""
         self.ih_instance = image_horizon_instance
 
     def _try_locate(self, ref_image, haystack_image=None, locate_all=False):
-        """Locate a reference image using scikit-image edge detection.
+        """Locate a reference image using OpenCV edge detection.
 
         Parameters
         ----------
@@ -663,14 +658,21 @@ class _StrategySkimage:
         """
 
         ih = self.ih_instance
-        confidence = ih.confidence or self._SKIMAGE_DEFAULT_CONFIDENCE
+        confidence = ih.confidence or self._CV_DEFAULT_CONFIDENCE
         with ih._suppress_keyword_on_failure():
-            needle_img = imread(ref_image, as_gray=True)
+            needle_img = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
             needle_img_name = ref_image.split("\\")[-1].split(".")[0]
             if haystack_image is None:
-                haystack_img_gray = rgb2gray(np.array(ag.screenshot()))
+                haystack_img_gray = cv2.cvtColor(
+                    np.array(ag.screenshot()), cv2.COLOR_RGB2GRAY
+                )
             else:
-                haystack_img_gray = rgb2gray(haystack_image)
+                if len(haystack_image.shape) == 2:
+                    haystack_img_gray = haystack_image
+                else:
+                    haystack_img_gray = cv2.cvtColor(
+                        haystack_image, cv2.COLOR_BGR2GRAY
+                    )
 
             ih.haystack_edge = self.detect_edges(haystack_img_gray)
 
@@ -687,28 +689,24 @@ class _StrategySkimage:
             for scale in scales:
                 scaled_height = max(1, int(needle_img.shape[0] * scale))
                 scaled_width = max(1, int(needle_img.shape[1] * scale))
-                scaled_needle = resize(
+                scaled_needle = cv2.resize(
                     needle_img,
-                    (scaled_height, scaled_width),
-                    anti_aliasing=True,
+                    (scaled_width, scaled_height),
+                    interpolation=cv2.INTER_AREA,
                 )
                 needle_edge = self.detect_edges(scaled_needle)
-                peakmap = match_template(
-                    ih.haystack_edge, needle_edge, pad_input=True
+                haystack_edge_uint8 = (ih.haystack_edge * 255).astype(np.uint8)
+                needle_edge_uint8 = (needle_edge * 255).astype(np.uint8)
+                peakmap = cv2.matchTemplate(
+                    haystack_edge_uint8, needle_edge_uint8, cv2.TM_CCOEFF_NORMED
                 )
 
                 if locate_all:
-                    peaks = peak_local_max(peakmap, threshold_rel=confidence)
-                    for pk in peaks:
-                        y, x = pk
+                    peaks = np.where(peakmap >= confidence)
+                    for y, x in zip(*peaks):
                         peak = peakmap[y][x]
                         if peak > confidence:
-                            loc = (
-                                x - scaled_width / 2,
-                                y - scaled_height / 2,
-                                scaled_width,
-                                scaled_height,
-                            )
+                            loc = (x, y, scaled_width, scaled_height)
                             locations.append((loc, peak, scale))
                         if peak > best_score:
                             best_score = peak
@@ -718,15 +716,15 @@ class _StrategySkimage:
                             ih.peakmap = peakmap
                             best_needle = scaled_needle
                 else:
-                    ij = np.unravel_index(np.argmax(peakmap), peakmap.shape)
-                    x, y = ij[::-1]
-                    peak = peakmap[y][x]
+                    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(peakmap)
+                    peak = max_val
+                    x, y = max_loc
                     if peak > best_score:
                         best_score = peak
                         best_scale = scale
                         best_location = (
-                            x - scaled_width / 2,
-                            y - scaled_height / 2,
+                            x,
+                            y,
                             scaled_width,
                             scaled_height,
                         )
@@ -738,17 +736,28 @@ class _StrategySkimage:
                 return locations
 
             if best_score > confidence and ih.validate_match and ih.has_cv:
-                import cv2
                 margin = ih.validation_margin or 0
-                haystack_uint8 = (haystack_img_gray * 255).astype(np.uint8)
-                needle_uint8 = (best_needle * 255).astype(np.uint8)
+                haystack_uint8 = haystack_img_gray.astype(np.uint8)
+                needle_uint8 = best_needle.astype(np.uint8)
                 x0 = int(max(0, best_location[0] - margin))
                 y0 = int(max(0, best_location[1] - margin))
-                x1 = int(min(haystack_uint8.shape[1], best_location[0] + best_location[2] + margin))
-                y1 = int(min(haystack_uint8.shape[0], best_location[1] + best_location[3] + margin))
+                x1 = int(
+                    min(
+                        haystack_uint8.shape[1],
+                        best_location[0] + best_location[2] + margin,
+                    )
+                )
+                y1 = int(
+                    min(
+                        haystack_uint8.shape[0],
+                        best_location[1] + best_location[3] + margin,
+                    )
+                )
                 region = haystack_uint8[y0:y1, x0:x1]
                 if region.shape[0] >= needle_uint8.shape[0] and region.shape[1] >= needle_uint8.shape[1]:
-                    res = cv2.matchTemplate(region, needle_uint8, cv2.TM_CCOEFF_NORMED)
+                    res = cv2.matchTemplate(
+                        region, needle_uint8, cv2.TM_CCOEFF_NORMED
+                    )
                     if res.size == 0 or res.max() < confidence:
                         return None, best_score, best_scale
 
@@ -773,10 +782,10 @@ class _StrategySkimage:
         Notes
         -----
         If the image uses 8-bit integers, it is converted to floating point so
-        that thresholding works reliably. ``threshold_otsu`` provides a
-        reasonable high threshold, while the standard deviation of the image is
-        used to scale ``sigma`` and the low threshold is derived as a fraction
-        of the high threshold.
+        that thresholding works reliably. ``cv2.threshold`` with ``OTSU``
+        provides a reasonable high threshold, while the standard deviation of
+        the image is used to scale ``sigma`` and the low threshold is derived as
+        a fraction of the high threshold.
         """
 
         img_float = img.astype(np.float64)
@@ -786,7 +795,9 @@ class _StrategySkimage:
         std = float(np.std(img_float))
         sigma = float(np.clip(std * 3, 0.1, 5.0))
 
-        t = threshold_otsu(img_float)
+        img_uint8 = (img_float * 255).astype(np.uint8)
+        _, t = cv2.threshold(img_uint8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        t = t / 255.0
         low = float(max(0.0, t * 0.5))
         high = float(min(1.0, t * 1.5))
         if high <= low:
@@ -819,30 +830,28 @@ class _StrategySkimage:
         """
         preprocess = self.ih_instance.edge_preprocess
         ksize = int(self.ih_instance.edge_kernel_size or 3)
+
+        img_float = img.astype(np.float32)
+        if img_float.max() > 1.0:
+            img_uint8 = img_float.astype(np.uint8)
+        else:
+            img_uint8 = (img_float * 255).astype(np.uint8)
+
         if preprocess and self.ih_instance.has_cv:
-            import cv2
-            img_uint8 = (img * 255).astype(np.uint8)
             if preprocess == "gaussian":
-                # Smooth the image to reduce noise
                 img_uint8 = cv2.GaussianBlur(img_uint8, (ksize, ksize), 0)
             elif preprocess == "median":
-                # Median filter to suppress salt-and-pepper noise
                 img_uint8 = cv2.medianBlur(img_uint8, ksize)
             elif preprocess == "erode":
-                # Erode to reduce small details
                 img_uint8 = cv2.erode(img_uint8, np.ones((ksize, ksize), np.uint8))
             elif preprocess == "dilate":
-                # Dilate to emphasize prominent features
                 img_uint8 = cv2.dilate(img_uint8, np.ones((ksize, ksize), np.uint8))
-            img = img_uint8.astype(np.float32) / 255.0
 
-        edge_img = canny(
-            image=img,
-            sigma=sigma,
-            low_threshold=low,
-            high_threshold=high,
-        )
-        return edge_img
+        if sigma and sigma > 0:
+            img_uint8 = cv2.GaussianBlur(img_uint8, (0, 0), sigma)
+
+        edge_img = cv2.Canny(img_uint8, int(low * 255), int(high * 255))
+        return edge_img.astype(np.float32) / 255.0
 
     def detect_edges(self, img):
         """Apply edge detection on a given image.

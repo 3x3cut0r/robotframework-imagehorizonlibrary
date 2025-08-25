@@ -40,8 +40,8 @@ class Pyautogui(TemplateMatchingStrategy):
         return self.coord
 
 
-class Skimage(TemplateMatchingStrategy):
-    """Strategy using scikit-image for template matching."""
+class Cv2(TemplateMatchingStrategy):
+    """Strategy using OpenCV for template matching."""
 
     def __init__(self, image_container: ImageContainer, image_horizon_instance):
         """Store references to images and the ImageHorizonLibrary instance."""
@@ -49,7 +49,7 @@ class Skimage(TemplateMatchingStrategy):
         self.image_horizon_instance = image_horizon_instance
 
     def find_num_of_matches(self):
-        """Return coordinates of all matches using scikit-image."""
+        """Return coordinates of all matches using OpenCV."""
         self.coord = list(self.image_horizon_instance._locate_all(
             self.image_container.get_needle_image(ImageFormat.PATHSTR),
             self.image_container.get_haystack_image_orig_size(ImageFormat.NUMPYARRAY)
