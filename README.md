@@ -5,11 +5,27 @@ It exists to keep development moving.
 
 Documentation has been adapted for GitHub Pages and is available at [https://3x3cut0r.github.io/robotframework-imagehorizonlibrary/](https://3x3cut0r.github.io/robotframework-imagehorizonlibrary/).
 
+## Table of Contents
 
-Notable differences to the original project:
+- [Notable differences to the original project](#notable-differences-to-the-original-project)
+- [Introduction](#introduction)
+- [Edge preprocessing](#edge-preprocessing)
+- [Keyword documentation](#keyword-documentation)
+- [Robot keywords](#robot-keywords)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+  - [Windows](#windows)
+  - [macOS](#macos)
+  - [Linux](#linux)
+- [Building from source](#building-from-source)
+- [Running unit tests](#running-unit-tests)
+- [Running acceptance tests](#running-acceptance-tests)
+- [Updating docs](#updating-docs)
+
+## Notable differences to the original project
 
 - Merged all open RP on original repository.
-- Added `edge` recognition strategy using `skimage` for robust matching on screens with pixel deviations.
+- Added `edge` recognition strategy using OpenCV (`cv2`) for robust matching on screens with pixel deviations.
 - Additional edge preprocessing filters (`gaussian`, `median`, `erode`, `dilate`) for the `edge` recognition strategy.
 - Optional multi-scale search that can be enabled with `Set Scale Range`.
 - Keywords such as `Wait For` and `Locate` now have a working timout function.
@@ -17,6 +33,7 @@ Notable differences to the original project:
 - Compatibility with Python 3.11 and Robot Framework 7.
 - Installation metadata managed via `pyproject.toml` and updated dependencies.
 - Various documentation improvements and safe version handling.
+- Removed unused dependencies and replaced `scikit-image` with headless OpenCV (`opencv-python-headless`).
 
 ## Introduction
 
@@ -24,7 +41,7 @@ This Robot Framework library provides facilities to automate GUIs based on
 image recognition similar to Sikuli, but without any Java dependency (100% Python).
 
 There are two different recognition strategies: _default_ (using `pyautogui`)
-and _edge_ (using `skimage`). For non pixel perfect matches, there is a feature
+and _edge_ (using OpenCV (`cv2`)). For non pixel perfect matches, there is a feature
 called "confidence level" that allows to define the percentage of pixels which
 _must_ match. In the _default_ strategy, confidence comes with a dependency to
 OpenCV (`opencv-python`). This functionality is optional - you are not required
@@ -84,6 +101,51 @@ Call `Reset Scale Range` to disable multi-scale search again.
 
 Generated keyword documentation is available in
 [`docs/index.html`](docs/index.html).
+
+## Robot keywords
+
+| Keyword | Description |
+| --- | --- |
+| Click | Click once with the specified mouse button. |
+| Click Image | Locate an image on screen and click its center once. |
+| Click To The Above Of | Click above a location by a given pixel offset. |
+| Click To The Above Of Image | Click above a located reference image by a pixel offset. |
+| Click To The Below Of | Click below a location by a given pixel offset. |
+| Click To The Below Of Image | Click below a located reference image by a pixel offset. |
+| Click To The Left Of | Click left of a location by a given pixel offset. |
+| Click To The Left Of Image | Click left of a located reference image by a pixel offset. |
+| Click To The Right Of | Click right of a location by a given pixel offset. |
+| Click To The Right Of Image | Click right of a located reference image by a pixel offset. |
+| Copy | Copy currently selected text to the system clipboard. |
+| Copy From The Above Of | Copy text above a reference image. |
+| Copy From The Below Of | Copy text below a reference image. |
+| Copy From The Left Of | Copy text left of a reference image. |
+| Copy From The Right Of | Copy text right of a reference image. |
+| Debug Image | Halts the test execution and opens the image debugger UI. |
+| Does Exist | Check whether a reference image exists on the screen. |
+| Double Click | Double-click with the specified mouse button. |
+| Get Clipboard Content | Return the current text from the system clipboard. |
+| Launch Application | Launch an external application as a new process. |
+| Locate | Locate image on screen. |
+| Mouse Down | Press and hold a mouse button. |
+| Mouse Up | Release a previously pressed mouse button. |
+| Move To | Move the mouse pointer to absolute screen coordinates. |
+| Pause | Display a modal dialog to temporarily halt test execution. |
+| Press Combination | Press multiple keyboard keys simultaneously. |
+| Reset Confidence | Resets the confidence level to the library default. |
+| Reset Scale Range | Disables multi-scale search and resets to defaults. |
+| Set Confidence | Sets the accuracy when finding images. |
+| Set Keyword On Failure | Sets keyword to be run, when location-related keywords fail. |
+| Set Reference Folder | Sets where all reference images are stored. |
+| Set Scale Range | Enables searching images across a range of scales. |
+| Set Screenshot Folder | Sets the folder where screenshots are saved to. |
+| Set Strategy | Changes the way how images are detected on the screen. |
+| Take A Screenshot | Capture and save a screenshot of the current screen. |
+| Terminate Application | Terminate a process started with :py:meth:launch_application. |
+| Triple Click | Triple-click with the specified mouse button. |
+| Type | Type a sequence of text fragments and/or special keys. |
+| Type With Keys Down | Hold down keyboard keys while typing text. |
+| Wait For | Wait until an image appears on the screen. |
 
 ## Prerequisites
 
