@@ -6,7 +6,7 @@ from sys import exc_info
 from tempfile import mkdtemp
 from unittest import TestCase
 
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from robot.libraries.BuiltIn import BuiltIn
 
 CURDIR = abspath(dirname(__file__))

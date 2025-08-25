@@ -1,83 +1,123 @@
 # -*- coding: utf-8 -*-
 import pyautogui as ag
+"""Mouse interaction keywords."""
 
 from ..errors import MouseException
 
 
 class _Mouse(object):
+    """Mixin implementing mouse related actions."""
 
     def _click_to_the_direction_of(self, direction, location, offset,
                                    clicks, button, interval):
+        """Click relative to a location in a given direction.
+
+        Parameters
+        ----------
+        direction : str
+            One of ``'up'``, ``'down'``, ``'left'`` or ``'right'``.
+        location : sequence
+            Two-item sequence ``(x, y)`` representing a screen coordinate.
+        offset : int
+            Distance in pixels from ``location`` towards ``direction``.
+        clicks : int
+            Number of clicks to perform.
+        button : str
+            Mouse button to use, e.g. ``'left'``.
+        interval : float
+            Delay between clicks.
+
+        Returns
+        -------
+        None
+        """
         raise NotImplementedError('This is defined in the main class.')
 
     def click_to_the_above_of(self, location, offset, clicks=1,
                               button='left', interval=0.0):
-        '''Clicks above of given location by given offset.
+        """Click above a location by a given pixel offset.
 
-        ``location`` can be any Python sequence type (tuple, list, etc.) that
-        represents coordinates on the screen ie. have an x-value and y-value.
-        Locating-related keywords return location you can use with this
-        keyword.
+        Parameters
+        ----------
+        location : sequence
+            Two-item sequence ``(x, y)`` describing a screen coordinate.
+        offset : int
+            Number of pixels the click is moved upwards from ``location``.
+        clicks : int, optional
+            How many times to click. Defaults to ``1``.
+        button : str, optional
+            Mouse button to use. Defaults to ``'left'``. See ``Click`` for
+            valid values.
+        interval : float, optional
+            Delay between consecutive clicks. Defaults to ``0.0`` seconds.
 
-        ``offset`` is the number of pixels from the specified ``location``.
+        Returns
+        -------
+        None
 
-        ``clicks`` is how many times the mouse button is clicked.
-
-        See `Click` for documentation for valid buttons.
-
-        Example:
-
+        Examples
+        --------
         | ${image location}=    | Locate             | my image |        |
         | Click To The Above Of | ${image location}  | 50       |        |
         | @{coordinates}=       | Create List        | ${600}   | ${500} |
         | Click To The Above Of | ${coordinates}     | 100      |        |
-        '''
+        """
         self._click_to_the_direction_of('up', location, offset,
                                         clicks, button, interval)
 
     def click_to_the_below_of(self, location, offset, clicks=1,
                               button='left', interval=0.0):
-        '''Clicks below of given location by given offset.
+        """Click below a location by a given pixel offset.
 
-        See argument documentation in `Click To The Above Of`.
-        '''
+        Parameters are documented in :py:meth:`click_to_the_above_of`.
+        """
         self._click_to_the_direction_of('down', location, offset,
                                         clicks, button, interval)
 
     def click_to_the_left_of(self, location, offset, clicks=1,
                              button='left', interval=0.0):
-        '''Clicks left of given location by given offset.
+        """Click left of a location by a given pixel offset.
 
-        See argument documentation in `Click To The Above Of`.
-        '''
+        Parameters are documented in :py:meth:`click_to_the_above_of`.
+        """
         self._click_to_the_direction_of('left', location, offset,
                                         clicks, button, interval)
 
     def click_to_the_right_of(self, location, offset, clicks=1,
                               button='left', interval=0.0):
-        '''Clicks right of given location by given offset.
+        """Click right of a location by a given pixel offset.
 
-        See argument documentation in `Click To The Above Of`.
-        '''
+        Parameters are documented in :py:meth:`click_to_the_above_of`.
+        """
         self._click_to_the_direction_of('right', location, offset,
                                         clicks, button, interval)
 
     def move_to(self, *coordinates):
-        '''Moves the mouse pointer to an absolute coordinates.
+        """Move the mouse pointer to absolute screen coordinates.
 
-        ``coordinates`` can either be a Python sequence type with two values
-        (eg. ``(x, y)``) or separate values ``x`` and ``y``:
+        Parameters
+        ----------
+        *coordinates
+            Either a two-item sequence ``(x, y)`` or separate ``x`` and ``y``
+            values.
 
+        Returns
+        -------
+        None
+
+        Examples
+        --------
         | Move To         | 25             | 150       |     |
         | @{coordinates}= | Create List    | 25        | 150 |
         | Move To         | ${coordinates} |           |     |
         | ${coords}=      | Evaluate       | (25, 150) |     |
         | Move To         | ${coords}      |           |     |
 
-
-        X grows from left to right and Y grows from top to bottom, which means
-        that top left corner of the screen is (0, 0)
-        '''
+        Notes
+        -----
+        X grows from left to right and Y grows from top to bottom, meaning the
+        top-left corner of the screen is ``(0, 0)``.
+        """
         if len(coordinates) > 2 or (len(coordinates) == 1 and
                                     type(coordinates[0]) not in (list, tuple)):
             raise MouseException('Invalid number of coordinates. Please give '
@@ -94,35 +134,77 @@ class _Mouse(object):
         ag.moveTo(*coordinates)
 
     def mouse_down(self, button='left'):
-        '''Presses specidied mouse button down'''
+        """Press and hold a mouse button.
+
+        Parameters
+        ----------
+        button : str, optional
+            Mouse button to press. Defaults to ``'left'``.
+
+        Returns
+        -------
+        None
+        """
         ag.mouseDown(button=button)
 
     def mouse_up(self, button='left'):
-        '''Releases specified mouse button'''
+        """Release a previously pressed mouse button.
+
+        Parameters
+        ----------
+        button : str, optional
+            Mouse button to release. Defaults to ``'left'``.
+
+        Returns
+        -------
+        None
+        """
         ag.mouseUp(button=button)
 
     def click(self, button='left'):
-        '''Clicks with the specified mouse button.
+        """Click once with the specified mouse button.
 
-        Valid buttons are ``left``, ``right`` or ``middle``.
-        '''
+        Parameters
+        ----------
+        button : str, optional
+            Which mouse button to use. Valid values are ``'left'``, ``'right'``
+            and ``'middle'``. Defaults to ``'left'``.
+
+        Returns
+        -------
+        None
+        """
         ag.click(button=button)
 
     def double_click(self, button='left', interval=0.0):
-        '''Double clicks with the specified mouse button.
+        """Double-click with the specified mouse button.
 
-        See documentation of ``button`` in `Click`.
+        Parameters
+        ----------
+        button : str, optional
+            Mouse button to use. See :py:meth:`click` for valid values.
+        interval : float, optional
+            Time between the two clicks in seconds. Defaults to ``0.0``.
 
-        ``interval`` specifies the time between clicks and should be
-        floating point number.
-        '''
+        Returns
+        -------
+        None
+        """
         ag.doubleClick(button=button, interval=float(interval))
 
     def triple_click(self, button='left', interval=0.0):
-        '''Triple clicks with the specified mouse button.
+        """Triple-click with the specified mouse button.
 
-        See documentation of ``button`` in `Click`.
+        Parameters
+        ----------
+        button : str, optional
+            Mouse button to use. See :py:meth:`click` for valid values.
+        interval : float, optional
+            Delay between individual clicks in seconds. See
+            :py:meth:`double_click` for details. Defaults to ``0.0``.
 
-        See documentation of ``interval`` in `Double Click`.
-        '''
+        Returns
+        -------
+        None
+        """
         ag.tripleClick(button=button, interval=float(interval))

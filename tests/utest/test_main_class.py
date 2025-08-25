@@ -7,7 +7,7 @@ from subprocess import PIPE, Popen
 from unittest import SkipTest, TestCase
 from warnings import warn
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 
 SRCDIR = path_join(abspath(dirname(__file__)), '..', '..', 'src')
@@ -102,3 +102,11 @@ class TestMainClass(TestCase):
 
         self.lib.set_confidence(None)
         self.assertEqual(self.lib.confidence, None)
+
+    def test_set_confidence_with_non_numeric_string_logs_warning(self):
+        with patch('ImageHorizonLibrary.LOGGER') as logger_mock:
+            self.lib.set_confidence('invalid')
+            logger_mock.warn.assert_called_once_with(
+                "Can't set confidence to invalid"
+            )
+            self.assertIsNone(self.lib.confidence)

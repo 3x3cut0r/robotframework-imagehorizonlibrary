@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
-from mock import call, MagicMock, patch
+from unittest.mock import call, MagicMock, patch
 
 
 class TestMouse(TestCase):

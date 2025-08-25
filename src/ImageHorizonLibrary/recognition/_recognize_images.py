@@ -1,257 +1,876 @@
 # -*- coding: utf-8 -*-
 from os import listdir
 from os.path import abspath, isdir, isfile, join as path_join
-from time import time
+from time import time, sleep
 from contextlib import contextmanager
 
 import pyautogui as ag
 from robot.api import logger as LOGGER
 
+try:
+    from skimage.feature import match_template, peak_local_max, canny
+    from skimage.color import rgb2gray
+    from skimage.io import imread, imsave
+    from skimage.filters import threshold_otsu
+    from skimage.transform import resize
+except Exception:  # pragma: no cover - graceful fallback when skimage is missing
+    match_template = peak_local_max = canny = None
+    rgb2gray = imread = imsave = threshold_otsu = resize = None
+
+import numpy as np
+
+
 from ..errors import ImageNotFoundException, InvalidImageException
 from ..errors import ReferenceFolderException
 
-class _RecognizeImages(object):
 
-    def __normalize(self, path):
-        if (not self.reference_folder or
-                not isinstance(self.reference_folder, str) or
-                not isdir(self.reference_folder)):
-            raise ReferenceFolderException('Reference folder is invalid: '
-                                           '"%s"' % self.reference_folder)
-        if (not path or not isinstance(path, str)):
+class _RecognizeImages(object):
+    """Mixin implementing image recognition keywords."""
+
+    dflt_timeout = 0
+
+    pixel_ratio = 0.0
+
+    def __get_pixel_ratio(self):
+        """Calculate display pixel ratio once and cache it."""
+        try:
+            ratio = ag.screenshot().size[0] / ag.size().width
+            self.pixel_ratio = float(ratio)
+        except Exception:
+            self.pixel_ratio = 1.0
+
+    def _normalize(self, path):
+        """Return an absolute path for a reference image or directory.
+
+        Parameters
+        ----------
+        path : str
+            Name of the reference image or folder. The value is normalized to
+            lower case, spaces are converted to underscores and the reference
+            folder path is prepended automatically. ``.png`` is appended if the
+            file extension is missing.
+
+        Returns
+        -------
+        str
+            Absolute path pointing to the resolved reference image or
+            directory.
+
+        Raises
+        ------
+        ReferenceFolderException
+            If the configured reference folder is invalid.
+        InvalidImageException
+            If ``path`` does not refer to an existing image or folder.
+        """
+        if (
+            not self.reference_folder
+            or not isinstance(self.reference_folder, str)
+            or not isdir(self.reference_folder)
+        ):
+            raise ReferenceFolderException(
+                "Reference folder is invalid: " '"%s"' % self.reference_folder
+            )
+        if not path or not isinstance(path, str):
             raise InvalidImageException('"%s" is invalid image name.' % path)
-        path = str(path.lower().replace(' ', '_'))
+        path = str(path.lower().replace(" ", "_"))
         path = abspath(path_join(self.reference_folder, path))
-        if not path.endswith('.png') and not isdir(path):
-            path += '.png'
+        if not path.endswith(".png") and not isdir(path):
+            path += ".png"
         if not isfile(path) and not isdir(path):
             raise InvalidImageException('Image path not found: "%s".' % path)
         return path
 
-    def click_image(self, reference_image):
-        '''Finds the reference image on screen and clicks it once.
+    def click_image(self, reference_image, timeout=dflt_timeout):
+        """Locate an image on screen and click its center once.
 
-        ``reference_image`` is automatically normalized as described in the
-        `Reference image names`.
-        '''
-        center_location = self.locate(reference_image)
-        LOGGER.info('Clicking image "%s" in position %s' % (reference_image,
-                                                            center_location))
-        ag.click(center_location)
-        return center_location
+        Parameters
+        ----------
+        reference_image : str
+            Name of the reference image to search for. The value is normalized
+            as described in `Reference image names`.
+        timeout : int, optional
+            Maximum time in seconds to wait for the image to appear. Defaults
+            to :pyattr:`dflt_timeout` (0).
 
-    def _click_to_the_direction_of(self, direction, location, offset,
-                                   clicks, button, interval):
-        raise NotImplementedError('This is defined in the main class.')
+        Returns
+        -------
+        tuple
+            A tuple ``(x, y, score, scale)`` with the coordinates of the match,
+            optional matching score and detected scale factor.
+        """
+        x, y, score, scale = self.wait_for(reference_image, timeout)
+        LOGGER.info(
+            'Clicking image "%s" in position %s' % (reference_image, (x, y))
+        )
+        ag.click((x, y))
+        return (x, y, score, scale)
 
-    def _locate_and_click_direction(self, direction, reference_image, offset,
-                                    clicks, button, interval):
-        location = self.locate(reference_image)
-        self._click_to_the_direction_of(direction, location, offset, clicks,
-                                        button, interval)
+    def _click_to_the_direction_of(
+        self, direction, location, offset, clicks, button, interval
+    ):
+        """Click relative to ``location`` in ``direction`` by ``offset`` pixels.
 
-    def click_to_the_above_of_image(self, reference_image, offset, clicks=1,
-                                    button='left', interval=0.0):
-        '''Clicks above of reference image by given offset.
+        See :py:meth:`ImageHorizonLibrary._Mouse._click_to_the_direction_of`
+        for parameter documentation.
+        """
+        raise NotImplementedError("This is defined in the main class.")
 
-        See `Reference image names` for documentation for ``reference_image``.
+    def _locate_and_click_direction(
+        self,
+        direction,
+        reference_image,
+        offset,
+        clicks,
+        button,
+        interval,
+        timeout=dflt_timeout,
+    ):
+        """Locate ``reference_image`` and click towards ``direction``.
 
-        ``offset`` is the number of pixels from the center of the reference
-        image.
+        Parameters are the same as in :py:meth:`click_to_the_above_of_image`.
+        """
+        x, y, score, scale = self.wait_for(reference_image, timeout)
+        self._click_to_the_direction_of(
+            direction, (x, y), offset, clicks, button, interval
+        )
 
-        ``clicks`` and ``button`` are documented in `Click To The Above Of`.
-        '''
-        self._locate_and_click_direction('up', reference_image, offset,
-                                         clicks, button, interval)
+    def click_to_the_above_of_image(
+        self,
+        reference_image,
+        offset,
+        clicks=1,
+        button="left",
+        interval=0.0,
+        timeout=dflt_timeout,
+    ):
+        """Click above a located reference image by a pixel offset.
 
-    def click_to_the_below_of_image(self, reference_image, offset, clicks=1,
-                                    button='left', interval=0.0):
-        '''Clicks below of reference image by given offset.
+        Parameters
+        ----------
+        reference_image : str
+            Name of the reference image to locate.
+        offset : int
+            Distance in pixels above the image's center where the click occurs.
+        clicks : int, optional
+            Number of clicks to perform. Defaults to ``1``.
+        button : str, optional
+            Mouse button to use, e.g. ``"left"``. Defaults to ``"left"``.
+        interval : float, optional
+            Time between clicks in seconds. Defaults to ``0.0``.
+        timeout : int, optional
+            Maximum time to wait for the image in seconds. Defaults to
+            :pyattr:`dflt_timeout`.
 
-        See argument documentation in `Click To The Above Of Image`.
-        '''
-        self._locate_and_click_direction('down', reference_image, offset,
-                                         clicks, button, interval)
+        Returns
+        -------
+        None
+        """
+        self._locate_and_click_direction(
+            "up", reference_image, offset, clicks, button, interval, timeout
+        )
 
-    def click_to_the_left_of_image(self, reference_image, offset, clicks=1,
-                                   button='left', interval=0.0):
-        '''Clicks left of reference image by given offset.
+    def click_to_the_below_of_image(
+        self,
+        reference_image,
+        offset,
+        clicks=1,
+        button="left",
+        interval=0.0,
+        timeout=dflt_timeout,
+    ):
+        """Click below a located reference image by a pixel offset.
 
-        See argument documentation in `Click To The Above Of Image`.
-        '''
-        self._locate_and_click_direction('left', reference_image, offset,
-                                         clicks, button, interval)
+        Parameters are documented in :py:meth:`click_to_the_above_of_image`.
+        """
+        self._locate_and_click_direction(
+            "down", reference_image, offset, clicks, button, interval, timeout
+        )
 
-    def click_to_the_right_of_image(self, reference_image, offset, clicks=1,
-                                    button='left', interval=0.0):
-        '''Clicks right of reference image by given offset.
+    def click_to_the_left_of_image(
+        self,
+        reference_image,
+        offset,
+        clicks=1,
+        button="left",
+        interval=0.0,
+        timeout=dflt_timeout,
+    ):
+        """Click left of a located reference image by a pixel offset.
 
-        See argument documentation in `Click To The Above Of Image`.
-        '''
-        self._locate_and_click_direction('right', reference_image, offset,
-                                         clicks, button, interval)
+        Parameters are documented in :py:meth:`click_to_the_above_of_image`.
+        """
+        self._locate_and_click_direction(
+            "left", reference_image, offset, clicks, button, interval, timeout
+        )
 
-    def copy_from_the_above_of(self, reference_image, offset):
-        '''Clicks three times above of reference image by given offset and
-        copies.
+    def click_to_the_right_of_image(
+        self,
+        reference_image,
+        offset,
+        clicks=1,
+        button="left",
+        interval=0.0,
+        timeout=dflt_timeout,
+    ):
+        """Click right of a located reference image by a pixel offset.
 
-        See `Reference image names` for documentation for ``reference_image``.
+        Parameters are documented in :py:meth:`click_to_the_above_of_image`.
+        """
+        self._locate_and_click_direction(
+            "right", reference_image, offset, clicks, button, interval, timeout
+        )
 
-        See `Click To The Above Of Image` for documentation for ``offset``.
+    def copy_from_the_above_of(self, reference_image, offset, timeout=dflt_timeout):
+        """Copy text above a reference image.
 
-        Copy is done by pressing ``Ctrl+C`` on Windows and Linux and ``⌘+C``
-        on OS X.
-        '''
-        self._locate_and_click_direction('up', reference_image, offset,
-                                         clicks=3, button='left', interval=0.0)
+        The keyword triple-clicks above the located image and copies the
+        selection using the platform specific copy shortcut.
+
+        Parameters
+        ----------
+        reference_image : str
+            Name of the reference image to locate.
+        offset : int
+            Offset in pixels above the image where the triple-click occurs.
+        timeout : int, optional
+            Maximum time to wait for the image. Defaults to
+            :pyattr:`dflt_timeout`.
+
+        Returns
+        -------
+        str
+            The text content of the system clipboard after the copy action.
+        """
+        self._locate_and_click_direction(
+            "up",
+            reference_image,
+            offset,
+            clicks=3,
+            button="left",
+            interval=0.0,
+            timeout=timeout,
+        )
         return self.copy()
 
-    def copy_from_the_below_of(self, reference_image, offset):
-        '''Clicks three times below of reference image by given offset and
-        copies.
+    def copy_from_the_below_of(self, reference_image, offset, timeout=dflt_timeout):
+        """Copy text below a reference image.
 
-        See argument documentation in `Copy From The Above Of`.
-        '''
-        self._locate_and_click_direction('down', reference_image, offset,
-                                         clicks=3, button='left', interval=0.0)
+        Parameters are documented in :py:meth:`copy_from_the_above_of`.
+        """
+        self._locate_and_click_direction(
+            "down",
+            reference_image,
+            offset,
+            clicks=3,
+            button="left",
+            interval=0.0,
+            timeout=timeout,
+        )
         return self.copy()
 
-    def copy_from_the_left_of(self, reference_image, offset):
-        '''Clicks three times left of reference image by given offset and
-        copies.
+    def copy_from_the_left_of(self, reference_image, offset, timeout=dflt_timeout):
+        """Copy text left of a reference image.
 
-        See argument documentation in `Copy From The Above Of`.
-        '''
-        self._locate_and_click_direction('left', reference_image, offset,
-                                         clicks=3, button='left', interval=0.0)
+        Parameters are documented in :py:meth:`copy_from_the_above_of`.
+        """
+        self._locate_and_click_direction(
+            "left",
+            reference_image,
+            offset,
+            clicks=3,
+            button="left",
+            interval=0.0,
+            timeout=timeout,
+        )
         return self.copy()
 
-    def copy_from_the_right_of(self, reference_image, offset):
-        '''Clicks three times right of reference image by given offset and
-        copies.
+    def copy_from_the_right_of(self, reference_image, offset, timeout=dflt_timeout):
+        """Copy text right of a reference image.
 
-        See argument documentation in `Copy From The Above Of`.
-        '''
-        self._locate_and_click_direction('right', reference_image, offset,
-                                         clicks=3, button='left', interval=0.0)
+        Parameters are documented in :py:meth:`copy_from_the_above_of`.
+        """
+        self._locate_and_click_direction(
+            "right",
+            reference_image,
+            offset,
+            clicks=3,
+            button="left",
+            interval=0.0,
+            timeout=timeout,
+        )
         return self.copy()
 
     @contextmanager
     def _suppress_keyword_on_failure(self):
+        """Temporarily disable post-failure keyword during a block."""
         keyword = self.keyword_on_failure
         self.keyword_on_failure = None
         yield None
         self.keyword_on_failure = keyword
 
-    def _locate(self, reference_image, log_it=True):
+    def _get_reference_images(self, reference_image):
+        """Resolve one or many reference image paths.
+
+        Parameters
+        ----------
+        reference_image : str
+            Name of the reference image or a directory containing images.
+
+        Returns
+        -------
+        list[str]
+            A list of absolute image paths. If ``reference_image`` is a single
+            file, the list contains only that path. If it is a directory, all
+            files within the directory are returned in alphabetical order.
+
+        Raises
+        ------
+        InvalidImageException
+            If ``reference_image`` refers to a directory containing
+            non-image files.
+        """
         is_dir = False
         try:
-            if isdir(self.__normalize(reference_image)):
+            if isdir(self._normalize(reference_image)):
                 is_dir = True
         except InvalidImageException:
             pass
         is_file = False
         try:
-            if isfile(self.__normalize(reference_image)):
+            if isfile(self._normalize(reference_image)):
                 is_file = True
         except InvalidImageException:
             pass
-        reference_image = self.__normalize(reference_image)
+        reference_image = self._normalize(reference_image)
 
         reference_images = []
         if is_file:
             reference_images = [reference_image]
         elif is_dir:
-            for f in listdir(self.__normalize(reference_image)):
-                if not isfile(self.__normalize(path_join(reference_image, f))):
-                    raise InvalidImageException(
-                                            self.__normalize(reference_image))
+            for f in listdir(self._normalize(reference_image)):
+                if not isfile(self._normalize(path_join(reference_image, f))):
+                    raise InvalidImageException(self._normalize(reference_image))
                 reference_images.append(path_join(reference_image, f))
+        return reference_images
 
-        def try_locate(ref_image):
-            location = None
-            with self._suppress_keyword_on_failure():
-                try:
-                    if self.has_cv and self.confidence:
-                        location = ag.locateOnScreen(ref_image,
-                                                     confidence=self.confidence)
-                    else:
-                        if self.confidence:
-                            LOGGER.warn("Can't set confidence because you don't "
-                                        "have OpenCV (python-opencv) installed "
-                                        "or a confidence level was not given.")
-                        location = ag.locateOnScreen(ref_image)
-                except ImageNotFoundException as ex:
-                    LOGGER.info(ex)
-                    pass
-            return location
+    def _locate(self, reference_image, log_it=True):
+        """Return location and scale for ``reference_image`` on screen.
+
+        Parameters
+        ----------
+        reference_image : str
+            Name or path of the image to locate.
+        log_it : bool, optional
+            If ``True`` (default), log informative messages about the search
+            result.
+
+        Returns
+        -------
+        tuple
+            Tuple ``(x, y, score, scale)`` where ``(x, y)`` are coordinates of
+            the image center, ``score`` is the matching score and ``scale``
+            is the detected scaling factor or ``None`` when not available.
+
+        Raises
+        ------
+        ImageNotFoundException
+            If the image cannot be located.
+        """
+        reference_images = self._get_reference_images(reference_image)
 
         location = None
+        score = None
+        scale = 1.0
         for ref_image in reference_images:
-            location = try_locate(ref_image)
-            if location != None:
+            result = self._try_locate(ref_image)
+            if isinstance(result, tuple) and len(result) == 3:
+                loc, scr, scl = result
+            else:
+                loc, scr, scl = result, None, 1.0
+            if loc is not None:
+                location, score, scale = loc, scr, scl
                 break
 
         if location is None:
             if log_it:
-                LOGGER.info('Image "%s" was not found '
-                            'on screen.' % reference_image)
+                LOGGER.info(
+                    'Image "%s" was not found '
+                    "on screen. (strategy: %s)" % (reference_image, self.strategy)
+                )
             self._run_on_failure()
             raise ImageNotFoundException(reference_image)
-        if log_it:
-            LOGGER.info('Image "%s" found at %r' % (reference_image, location))
+
         center_point = ag.center(location)
         x = center_point.x
         y = center_point.y
-        if self.has_retina:
-            x = x / 2
-            y = y / 2
-        return (x, y)
+        if self.pixel_ratio == 0.0:
+            self.__get_pixel_ratio()
+        if self.pixel_ratio > 1:
+            x = x / self.pixel_ratio
+            y = y / self.pixel_ratio
+        if log_it:
+            LOGGER.info(
+                'Image "%s" found at %r (score %.3f, scale %.2f, strategy: %s)'
+                % (
+                    reference_image,
+                    (x, y),
+                    score if score is not None else float('nan'),
+                    scale,
+                    self.strategy,
+                )
+            )
+        return (x, y, score, scale)
+
+    def _locate_all(self, reference_image, haystack_image=None):
+        """Locate all occurrences of a reference image.
+
+        Parameters
+        ----------
+        reference_image : str
+            Name or path of the image to search for.
+        haystack_image : array-like, optional
+            Pre-captured screenshot to search in. If ``None``, a new screenshot
+            of the screen is taken.
+
+        Returns
+        -------
+        list[tuple]
+            A list of tuples ``(location, score, scale)`` for each match. The
+            list may be empty if no matches are found.
+
+        Raises
+        ------
+        InvalidImageException
+            If ``reference_image`` resolves to multiple files.
+        """
+        reference_images = self._get_reference_images(reference_image)
+        if len(reference_images) > 1:
+            raise InvalidImageException(
+                f'Locating ALL occurences of MANY files ({", ".join(reference_images)}) is not supported.'
+            )
+        locations = self._try_locate(
+            reference_images[0], locate_all=True, haystack_image=haystack_image
+        )
+        return locations
 
     def does_exist(self, reference_image):
-        '''Returns ``True`` if reference image was found on screen or
-        ``False`` otherwise. Never fails.
+        """Check whether a reference image exists on the screen.
 
-        See `Reference image names` for documentation for ``reference_image``.
-        '''
+        Parameters
+        ----------
+        reference_image : str
+            Name of the reference image to locate.
+
+        Returns
+        -------
+        bool
+            ``True`` if the image was found, ``False`` otherwise. The keyword
+            never raises an exception.
+        """
         with self._suppress_keyword_on_failure():
             try:
-                return bool(self._locate(reference_image, log_it=False))
+                return bool(self._locate(reference_image, log_it=True))
             except ImageNotFoundException:
                 return False
 
     def locate(self, reference_image):
-        '''Locate image on screen.
+        """Locate image on screen.
 
-        Fails if image is not found on screen.
+        Parameters
+        ----------
+        reference_image : str
+            Name or path of the image to locate.
 
-        Returns Python tuple ``(x, y)`` of the coordinates.
-        '''
+        Returns
+        -------
+        tuple
+            Tuple ``(x, y, score, scale)`` describing the match.
+
+        Raises
+        ------
+        ImageNotFoundException
+            If the image is not found on screen.
+        """
         return self._locate(reference_image)
 
     def wait_for(self, reference_image, timeout=10):
-        '''Tries to locate given image from the screen for given time.
+        """Wait until an image appears on the screen.
 
-        Fail if the image is not found on the screen after ``timeout`` has
-        expired.
+        Parameters
+        ----------
+        reference_image : str
+            Name of the reference image to locate.
+        timeout : float, optional
+            Maximum number of seconds to wait. Defaults to ``10``.
 
-        See `Reference image names` for documentation for ``reference_image``.
+        Returns
+        -------
+        tuple
+            Tuple ``(x, y, score, scale)`` describing the match.
 
-        ``timeout`` is given in seconds.
-
-        Returns Python tuple ``(x, y)`` of the coordinates.
-        '''
-        stop_time = time() + int(timeout)
+        Raises
+        ------
+        ImageNotFoundException
+            If the image is not found within the timeout.
+        """
+        stop_time = time() + float(timeout)
         location = None
         with self._suppress_keyword_on_failure():
-            while time() < stop_time:
+            while True:
                 try:
-                    location = self._locate(reference_image, log_it=False)
+                    location = self._locate(reference_image, log_it=True)
                     break
                 except ImageNotFoundException:
-                    pass
+                    if time() > stop_time:
+                        break
+                    sleep(0.1)
         if location is None:
             self._run_on_failure()
-            raise ImageNotFoundException(self.__normalize(reference_image))
-        LOGGER.info('Image "%s" found at %r' % (reference_image, location))
+            raise ImageNotFoundException(self._normalize(reference_image))
+        x, y, score, scale = location
+        LOGGER.info(
+            'Image "%s" found at %r (score %.3f, scale %.2f)'
+            % (
+                reference_image,
+                (x, y),
+                score if score is not None else float('nan'),
+                scale,
+            )
+        )
         return location
+
+    def debug_image(self):
+        """Halts the test execution and opens the image debugger UI.
+
+        Whenever you encounter problems with the recognition accuracy of a reference image,
+        you should place this keyword just before the line in question. Example:
+
+        | Debug Image
+        | Wait For  hard_to_find_button
+
+        The test will halt at this position and open the debugger UI. Use it as follows:
+
+        - Select the reference image (`hard_to_find_button`)
+        - Click the button "Detect reference image" for the strategy you want to test (default/edge). The GUI hides itself while it takes the screenshot of the current application.
+        - The Image Viewer at the botton shows the screenshot with all regions where the reference image was found.
+        - "Matches Found": More than one match means that either `conficence` is set too low or that the reference image is visible multiple times. If the latter is the case, you should first detect a unique UI element and use relative keywords like `Click To The Right Of`.
+        - "Max peak value" (only `edge`) gives feedback about the detection accuracy of the best match and is measured as a float number between 0 and 1. A peak value above _confidence_ results in a match.
+        - "Edge detection debugger" (only `edge`) opens another window where both the reference and screenshot images are shown before and after the edge detection and is very helpful to loearn how the sigma and low/high threshold parameters lead to different results.
+        - The field "Keyword to use this strategy" shows how to set the strategy to the current settings. Just copy the line and paste it into the test:
+
+        | Set Strategy  edge  edge_sigma=2.0  edge_low_threshold=0.1  edge_high_threshold=0.3
+        | Wait For  hard_to_find_button
+
+        The purpose of this keyword is *solely for debugging purposes*; don't
+        use it in production!"""
+        from .ImageDebugger import ImageDebugger
+
+        debug_app = ImageDebugger(self)
+
+
+class _StrategyPyautogui:
+    """Image matching strategy based on PyAutoGUI."""
+
+    def __init__(self, image_horizon_instance):
+        """Store reference to the owning ImageHorizonLibrary instance."""
+        self.ih_instance = image_horizon_instance
+
+    def _try_locate(self, ref_image, haystack_image=None, locate_all=False):
+        """Locate a reference image using PyAutoGUI's matching.
+
+        Parameters
+        ----------
+        ref_image : str
+            Path to the reference image.
+        haystack_image : image, optional
+            Screenshot to search in. If ``None``, a screenshot is taken.
+        locate_all : bool, optional
+            If ``True``, return all matches; otherwise only the first match.
+
+        Returns
+        -------
+        list or tuple or None
+            If ``locate_all`` is ``False``, returns a single location tuple or
+            ``None``. If ``locate_all`` is ``True``, returns a list of location
+            tuples (possibly empty).
+        """
+
+        ih = self.ih_instance
+        location = None
+        if haystack_image is None:
+            haystack_image = ag.screenshot()
+
+        if locate_all:
+            locate_func = ag.locateAll
+        else:
+            locate_func = ag.locate  # Copy below,take screenshots
+
+        with ih._suppress_keyword_on_failure():
+            try:
+                if ih.has_cv and ih.confidence:
+                    location_res = locate_func(
+                        ref_image, haystack_image, confidence=ih.confidence
+                    )
+                else:
+                    if ih.confidence:
+                        LOGGER.warn(
+                            "Can't set confidence because you don't "
+                            "have OpenCV (python3-opencv) installed "
+                            "or a confidence level was not given."
+                        )
+                    location_res = locate_func(ref_image, haystack_image)
+            except ImageNotFoundException as ex:
+                LOGGER.info(ex)
+                pass
+        if locate_all:
+            # convert the generator fo Box objects to a list of tuples
+            location = [tuple(box) for box in location_res]
+        else:
+            # Single Box
+            location = location_res
+        return location
+
+
+class _StrategySkimage:
+    """Image matching strategy using scikit-image edge detection."""
+
+    _SKIMAGE_DEFAULT_CONFIDENCE = 0.99
+
+    def __init__(self, image_horizon_instance):
+        """Store reference to the owning ImageHorizonLibrary instance."""
+        self.ih_instance = image_horizon_instance
+
+    def _try_locate(self, ref_image, haystack_image=None, locate_all=False):
+        """Locate a reference image using scikit-image edge detection.
+
+        Parameters
+        ----------
+        ref_image : str
+            Path to the reference image.
+        haystack_image : array-like, optional
+            Screenshot to search in. If ``None``, a screenshot is taken.
+        locate_all : bool, optional
+            If ``True``, return all matches for debugging.
+
+        Returns
+        -------
+        tuple or list
+            When ``locate_all`` is ``False``: ``(location, score, scale)`` or
+            ``(None, score, scale)`` if not found.
+            When ``locate_all`` is ``True``: a list of such tuples for each
+            detected match.
+        """
+
+        ih = self.ih_instance
+        confidence = ih.confidence or self._SKIMAGE_DEFAULT_CONFIDENCE
+        with ih._suppress_keyword_on_failure():
+            needle_img = imread(ref_image, as_gray=True)
+            needle_img_name = ref_image.split("\\")[-1].split(".")[0]
+            if haystack_image is None:
+                haystack_img_gray = rgb2gray(np.array(ag.screenshot()))
+            else:
+                haystack_img_gray = rgb2gray(haystack_image)
+
+            ih.haystack_edge = self.detect_edges(haystack_img_gray)
+
+            if ih.scale_enabled:
+                scales = np.linspace(ih.scale_min, ih.scale_max, ih.scale_steps)
+            else:
+                scales = [1.0]
+            best_location = None
+            best_scale = 1.0
+            best_score = -1.0
+            best_needle = None
+            locations = []
+
+            for scale in scales:
+                scaled_height = max(1, int(needle_img.shape[0] * scale))
+                scaled_width = max(1, int(needle_img.shape[1] * scale))
+                scaled_needle = resize(
+                    needle_img,
+                    (scaled_height, scaled_width),
+                    anti_aliasing=True,
+                )
+                needle_edge = self.detect_edges(scaled_needle)
+                peakmap = match_template(
+                    ih.haystack_edge, needle_edge, pad_input=True
+                )
+
+                if locate_all:
+                    peaks = peak_local_max(peakmap, threshold_rel=confidence)
+                    for pk in peaks:
+                        y, x = pk
+                        peak = peakmap[y][x]
+                        if peak > confidence:
+                            loc = (
+                                x - scaled_width / 2,
+                                y - scaled_height / 2,
+                                scaled_width,
+                                scaled_height,
+                            )
+                            locations.append((loc, peak, scale))
+                        if peak > best_score:
+                            best_score = peak
+                            best_scale = scale
+                            best_location = loc
+                            ih.needle_edge = needle_edge
+                            ih.peakmap = peakmap
+                            best_needle = scaled_needle
+                else:
+                    ij = np.unravel_index(np.argmax(peakmap), peakmap.shape)
+                    x, y = ij[::-1]
+                    peak = peakmap[y][x]
+                    if peak > best_score:
+                        best_score = peak
+                        best_scale = scale
+                        best_location = (
+                            x - scaled_width / 2,
+                            y - scaled_height / 2,
+                            scaled_width,
+                            scaled_height,
+                        )
+                        ih.needle_edge = needle_edge
+                        ih.peakmap = peakmap
+                        best_needle = scaled_needle
+
+            if locate_all:
+                return locations
+
+            if best_score > confidence and ih.validate_match and ih.has_cv:
+                import cv2
+                margin = ih.validation_margin or 0
+                haystack_uint8 = (haystack_img_gray * 255).astype(np.uint8)
+                needle_uint8 = (best_needle * 255).astype(np.uint8)
+                x0 = int(max(0, best_location[0] - margin))
+                y0 = int(max(0, best_location[1] - margin))
+                x1 = int(min(haystack_uint8.shape[1], best_location[0] + best_location[2] + margin))
+                y1 = int(min(haystack_uint8.shape[0], best_location[1] + best_location[3] + margin))
+                region = haystack_uint8[y0:y1, x0:x1]
+                if region.shape[0] >= needle_uint8.shape[0] and region.shape[1] >= needle_uint8.shape[1]:
+                    res = cv2.matchTemplate(region, needle_uint8, cv2.TM_CCOEFF_NORMED)
+                    if res.size == 0 or res.max() < confidence:
+                        return None, best_score, best_scale
+
+            if best_score > confidence:
+                return best_location, best_score, best_scale
+            return None, best_score, best_scale
+
+    def _auto_edge_parameters(self, img):
+        """Derive edge detection parameters from image statistics.
+
+        Parameters
+        ----------
+        img : array-like
+            Grayscale image data.
+
+        Returns
+        -------
+        tuple
+            Tuple ``(sigma, low, high)`` containing suitable parameters for the
+            Canny edge detector.
+
+        Notes
+        -----
+        If the image uses 8-bit integers, it is converted to floating point so
+        that thresholding works reliably. ``threshold_otsu`` provides a
+        reasonable high threshold, while the standard deviation of the image is
+        used to scale ``sigma`` and the low threshold is derived as a fraction
+        of the high threshold.
+        """
+
+        img_float = img.astype(np.float64)
+        if img_float.max() > 1.0:
+            img_float /= 255.0
+
+        std = float(np.std(img_float))
+        sigma = float(np.clip(std * 3, 0.1, 5.0))
+
+        t = threshold_otsu(img_float)
+        low = float(max(0.0, t * 0.5))
+        high = float(min(1.0, t * 1.5))
+        if high <= low:
+            high = min(1.0, low + 0.05)
+
+        return sigma, low, high
+
+    def _detect_edges(self, img, sigma, low, high):
+        """Run Canny edge detection with optional preprocessing.
+
+        Available filters for preprocessing are ``gaussian``, ``median``,
+        ``erode`` and ``dilate``. Preprocessing is only performed when the
+        ``edge_preprocess`` option is set *and* OpenCV is available.
+
+        Parameters
+        ----------
+        img : array-like
+            Grayscale image data.
+        sigma : float
+            Gaussian blur intensity for the Canny detector.
+        low : float
+            Low threshold for pixel gradients.
+        high : float
+            High threshold for pixel gradients.
+
+        Returns
+        -------
+        array-like
+            Edge-detected binary image.
+        """
+        preprocess = self.ih_instance.edge_preprocess
+        ksize = int(self.ih_instance.edge_kernel_size or 3)
+        if preprocess and self.ih_instance.has_cv:
+            import cv2
+            img_uint8 = (img * 255).astype(np.uint8)
+            if preprocess == "gaussian":
+                # Smooth the image to reduce noise
+                img_uint8 = cv2.GaussianBlur(img_uint8, (ksize, ksize), 0)
+            elif preprocess == "median":
+                # Median filter to suppress salt-and-pepper noise
+                img_uint8 = cv2.medianBlur(img_uint8, ksize)
+            elif preprocess == "erode":
+                # Erode to reduce small details
+                img_uint8 = cv2.erode(img_uint8, np.ones((ksize, ksize), np.uint8))
+            elif preprocess == "dilate":
+                # Dilate to emphasize prominent features
+                img_uint8 = cv2.dilate(img_uint8, np.ones((ksize, ksize), np.uint8))
+            img = img_uint8.astype(np.float32) / 255.0
+
+        edge_img = canny(
+            image=img,
+            sigma=sigma,
+            low_threshold=low,
+            high_threshold=high,
+        )
+        return edge_img
+
+    def detect_edges(self, img):
+        """Apply edge detection on a given image.
+
+        Parameters
+        ----------
+        img : array-like
+            Grayscale image data to process.
+
+        Returns
+        -------
+        array-like
+            Binary edge image computed with the Canny detector. If explicit
+            parameters are not provided, sensible defaults are derived from the
+            image statistics.
+        """
+
+        sigma = self.ih_instance.edge_sigma
+        low = self.ih_instance.edge_low_threshold
+        high = self.ih_instance.edge_high_threshold
+
+        if sigma is None or low is None or high is None:
+            auto_sigma, auto_low, auto_high = self._auto_edge_parameters(img)
+            if sigma is None:
+                sigma = auto_sigma
+            if low is None:
+                low = auto_low
+            if high is None:
+                high = auto_high
+
+        return self._detect_edges(img, sigma, low, high)

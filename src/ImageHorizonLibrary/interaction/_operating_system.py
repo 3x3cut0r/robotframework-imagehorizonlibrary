@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Operating system interaction keywords."""
+
 import shlex
 import subprocess
 
@@ -6,28 +8,36 @@ from ..errors import OSException
 
 
 class _OperatingSystem(object):
+    """Mixin providing application launch and termination keywords."""
 
     def launch_application(self, app, alias=None):
-        '''Launches an application.
+        """Launch an external application as a new process.
 
-        Executes the string argument ``app`` as a separate process with
-        Python's
-        ``[https://docs.python.org/2/library/subprocess.html|subprocess]``
-        module. It should therefore be the exact command you would use to
-        launch the application from command line.
+        Parameters
+        ----------
+        app : str
+            Command used to start the application. The string is split using
+            :func:`shlex.split` and passed to :class:`subprocess.Popen`.
+            It should therefore match the command you would execute on the
+            command line. On Windows, enclose paths containing spaces in
+            double quotes.
+        alias : str, optional
+            Name used to reference the started process later. If omitted, an
+            incremental alias is generated automatically.
 
-        On Windows, if you are using relative or absolute paths in ``app``,
-        enclose the command with double quotes:
+        Returns
+        -------
+        str
+            The alias associated with the launched application. This alias can
+            be used with :py:meth:`terminate_application`.
 
-        | Launch Application | "C:\\my folder\\myprogram.exe" | # Needs quotes       |
-        | Launch Application | myprogram.exe                  | # No need for quotes |
-
-        Returns automatically generated alias which can be used with `Terminate
-        Application`.
-
-        Automatically generated alias can be overridden by providing ``alias``
-        yourself.
-        '''
+        Examples
+        --------
+        | Launch Application | "C:\\my folder\\myprogram.exe" |
+        | Launch Application | myprogram.exe | arg1 | arg2 |
+        | Launch Application | myprogram.exe | alias=myprog |
+        | Launch Application | myprogram.exe | arg1 | arg2 | alias=myprog |
+        """
         if not alias:
             alias = str(len(self.open_applications))
         process = subprocess.Popen(shlex.split(app))
@@ -35,12 +45,24 @@ class _OperatingSystem(object):
         return alias
 
     def terminate_application(self, alias=None):
-        '''Terminates the process launched with `Launch Application` with
-        given ``alias``.
+        """Terminate a process started with :py:meth:`launch_application`.
 
-        If no ``alias`` is given, terminates the last process that was
-        launched.
-        '''
+        Parameters
+        ----------
+        alias : str, optional
+            Alias of the process to terminate. If omitted, the most recently
+            launched application is terminated.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        OSException
+            If the provided alias is invalid or no applications have been
+            launched.
+        """
         if alias and alias not in self.open_applications:
             raise OSException('Invalid alias "%s".' % alias)
         process = self.open_applications.pop(alias, None)
@@ -48,6 +70,8 @@ class _OperatingSystem(object):
             try:
                 _, process = self.open_applications.popitem()
             except KeyError:
-                raise OSException('`Terminate Application` called without '
-                                  '`Launch Application` called first.')
+                raise OSException(
+                    "`Terminate Application` called without "
+                    "`Launch Application` called first."
+                )
         process.terminate()

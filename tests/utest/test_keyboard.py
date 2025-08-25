@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 KEYBOARD_KEYS = [

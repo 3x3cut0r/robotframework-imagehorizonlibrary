@@ -1,4 +1,7 @@
-# -*- coding: utf-8 -*-
+"""Utility functions for platform detection and optional dependencies."""
+
+import sys
+from importlib import util
 from platform import platform, architecture
 from subprocess import call
 
@@ -29,9 +32,14 @@ def has_retina():
     return False
 
 def has_cv():
-    has_cv = True
     try:
-        import cv2
-    except ModuleNotFoundError as err:
-        has_cv = False
-    return has_cv
+        import cv2  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+def has_skimage():
+    try:
+        return "skimage" in sys.modules or util.find_spec("skimage") is not None
+    except Exception:
+        return False

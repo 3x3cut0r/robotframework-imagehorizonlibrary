@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 
 class TestOperatingSystem(TestCase):

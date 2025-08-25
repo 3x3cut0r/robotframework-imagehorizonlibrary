@@ -1,34 +1,56 @@
 # -*- coding: utf-8 -*-
+"""Keyboard interaction keywords."""
+
 import pyautogui as ag
 
 
 class _Keyboard(object):
+    """Mixin implementing keyboard related actions."""
+
     def press_combination(self, *keys):
-        '''Press given keyboard keys.
+        """Press multiple keyboard keys simultaneously.
 
-        All keyboard keys must be prefixed with ``Key.``.
+        Parameters
+        ----------
+        *keys
+            Keyboard keys to press. Each key must be given as a string and
+            prefixed with ``Key.``. Keys are case-insensitive.
 
-        Keyboard keys are case-insensitive:
+        Returns
+        -------
+        None
 
-        | Press Combination | KEY.ALT | key.f4 | 
-        | Press Combination | kEy.EnD |        |
+        Examples
+        --------
+        | Press Combination | Key.ALT | Key.F4 |
+        | Press Combination | key.ctrl | key.end |
 
-        [https://pyautogui.readthedocs.org/en/latest/keyboard.html#keyboard-keys|
-        See valid keyboard keys here].
-        '''
+        See also
+        --------
+        `PyAutoGUI keyboard keys <https://pyautogui.readthedocs.org/en/latest/keyboard.html#keyboard-keys>`_
+        for the full list of supported key names.
+        """
         self._press(*keys)
 
     def type(self, *keys_or_text):
-        '''Type text and keyboard keys.
+        """Type a sequence of text fragments and/or special keys.
 
-        See valid keyboard keys in `Press Combination`.
+        Parameters
+        ----------
+        *keys_or_text
+            Sequence of strings representing either plain text or keyboard
+            keys. Special keys must be prefixed with ``Key.``.
 
-        Examples:
+        Returns
+        -------
+        None
 
+        Examples
+        --------
         | Type | separated              | Key.ENTER | by linebreak |
         | Type | Submit this with enter | Key.enter |              |
         | Type | key.windows            | notepad   | Key.enter    |
-        '''
+        """
         for key_or_text in keys_or_text:
             key = self._convert_to_valid_special_key(key_or_text)
             if key:
@@ -38,15 +60,27 @@ class _Keyboard(object):
 
 
     def type_with_keys_down(self, text, *keys):
-        '''Press keyboard keys down, then write given text, then release the
-        keyboard keys.
+        """Hold down keyboard keys while typing text.
 
-        See valid keyboard keys in `Press Combination`.
+        The given keys are pressed and held, the ``text`` is written, and then
+        the keys are released again. This is useful for typing with modifiers
+        such as ``Key.Shift``.
 
-        Examples:
+        Parameters
+        ----------
+        text : str
+            The text to type while the modifier keys are held down.
+        *keys
+            Keyboard keys to hold down. Each key must be prefixed with ``Key.``.
 
-        | Type with keys down | write this in caps  | Key.Shift |
-        '''
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        | Type With Keys Down | write this in caps | Key.Shift |
+        """
         valid_keys = self._validate_keys(keys)
         for key in valid_keys:
             ag.keyDown(key)
