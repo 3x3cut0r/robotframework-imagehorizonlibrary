@@ -104,24 +104,24 @@ class UILocatorView(Tk):
         self.frame_edge_detec_strat.bind("<Leave>", self._clear_statusbar)
 
         Label(self.frame_edge_detec_strat, text="Gaussian width (sigma)").grid(row=0, column=0, sticky=SW)
-        self.scale_sigma_skimage = Scale(self.frame_edge_detec_strat, from_=0.0, to=5.0, resolution=0.01, orient=HORIZONTAL)
-        self.scale_sigma_skimage.grid(padx=(2, 0), row=0, column=1, sticky=E)
+        self.scale_sigma_edge = Scale(self.frame_edge_detec_strat, from_=0.0, to=5.0, resolution=0.01, orient=HORIZONTAL)
+        self.scale_sigma_edge.grid(padx=(2, 0), row=0, column=1, sticky=E)
 
         Label(self.frame_edge_detec_strat, text="Lower hysteresis threshold").grid(row=1, column=0, sticky=SW)
-        self.scale_low_thres_skimage = Scale(self.frame_edge_detec_strat, from_=0.0, to=10.0, resolution=0.01, orient=HORIZONTAL)
-        self.scale_low_thres_skimage.grid(padx=(2, 0), row=1, column=1, sticky=E)
+        self.scale_low_thres_edge = Scale(self.frame_edge_detec_strat, from_=0.0, to=10.0, resolution=0.01, orient=HORIZONTAL)
+        self.scale_low_thres_edge.grid(padx=(2, 0), row=1, column=1, sticky=E)
 
         Label(self.frame_edge_detec_strat, text="Higher hysteresis threshold").grid(row=2, column=0, sticky=SW)
-        self.scale_high_thres_skimage = Scale(self.frame_edge_detec_strat, from_=0.0, to=10.0, resolution=0.01, orient=HORIZONTAL)
-        self.scale_high_thres_skimage.grid(padx=(2, 0), row=2, column=1, sticky=E)
+        self.scale_high_thres_edge = Scale(self.frame_edge_detec_strat, from_=0.0, to=10.0, resolution=0.01, orient=HORIZONTAL)
+        self.scale_high_thres_edge.grid(padx=(2, 0), row=2, column=1, sticky=E)
 
         Label(self.frame_edge_detec_strat, text="Confidence factor").grid(row=3, column=0, sticky=SW)
-        self.scale_conf_lvl_skimage = Scale(self.frame_edge_detec_strat, from_=0.75, to=1.0, resolution=0.01, orient=HORIZONTAL)
-        self.scale_conf_lvl_skimage.grid(padx=(2, 0), row=3, column=1, sticky=E)
+        self.scale_conf_lvl_edge = Scale(self.frame_edge_detec_strat, from_=0.75, to=1.0, resolution=0.01, orient=HORIZONTAL)
+        self.scale_conf_lvl_edge.grid(padx=(2, 0), row=3, column=1, sticky=E)
 
-        self.btn_run_skimage = Button(frame_computation, text='Detect reference image', command=self.controller.on_click_run_edge_detec_strategy)
-        self.btn_run_skimage.grid(row=1, column=1, padx=2, sticky=W)
-        self.btn_edge_detec_debugger = Button(frame_computation, text='Edge detection debugger', command=self.controller.on_click_plot_results_skimage)
+        self.btn_run_edge = Button(frame_computation, text='Detect reference image', command=self.controller.on_click_run_edge_detec_strategy)
+        self.btn_run_edge.grid(row=1, column=1, padx=2, sticky=W)
+        self.btn_edge_detec_debugger = Button(frame_computation, text='Edge detection debugger', command=self.controller.on_click_plot_results_edge)
         self.btn_edge_detec_debugger.grid(row=2, column=1, padx=2, sticky=W)
 
     def _frame_results(self):
