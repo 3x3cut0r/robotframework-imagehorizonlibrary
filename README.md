@@ -25,15 +25,14 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 ## Notable differences to the original project
 
 - Merged all open RP on original repository.
+- Compatibility with Python 3.11 and Robot Framework 7.
 - Added `edge` recognition strategy using OpenCV (`cv2`) for robust matching on screens with pixel deviations.
 - Additional edge preprocessing filters (`gaussian`, `median`, `erode`, `dilate`) for the `edge` recognition strategy.
 - Optional multi-scale search that can be enabled with `Set Scale Range`.
-- Keywords such as `Wait For` and `Locate` now have a working timout function.
-- Keywords such as `Wait For` and `Locate` now return the correlation score (`score`) and detected scaling factor (`scale`).
-- Compatibility with Python 3.11 and Robot Framework 7.
-- Installation metadata managed via `pyproject.toml` and updated dependencies.
-- Various documentation improvements and safe version handling.
+- Keywords such as `Wait For` and `Locate` now have a working timout function and return the correlation score (`score`) and detected scaling factor (`scale`).
+- Installation metadata managed via `pyproject.toml`, updated dependencies and removed depricated `setup.py|cfg` files.
 - Removed unused dependencies and replaced `scikit-image` with headless OpenCV (`opencv-python-headless`).
+- Various documentation improvements and safe version handling.
 
 ## Introduction
 
