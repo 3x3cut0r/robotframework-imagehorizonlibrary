@@ -1,4 +1,7 @@
 .DS_Store
+.venv/
+build/
+dist/
 output.xml
 report.html
 log.html
@@ -12,4 +15,3 @@ log.html
 /lib
 *egg-info
 test_*
-build/
