@@ -187,13 +187,22 @@ class UILocatorController:
 
     def on_click_plot_results_skimage(self):
         """Display detailed edge detection results in a matplotlib window."""
-        title = f"{self.view.matches_found.get()} matches (confidence: {self.image_horizon_instance.confidence})"
-        self.model.plot_result(
-            self.image_container.get_needle_image(ImageFormat.NUMPYARRAY),
-            self.image_container.get_haystack_image_orig_size(ImageFormat.NUMPYARRAY),
-            self.image_horizon_instance.needle_edge,
-            self.image_horizon_instance.haystack_edge,
-            self.image_horizon_instance.peakmap,
-            title,
-            self.coord
+        title = (
+            f"{self.view.matches_found.get()} matches (confidence: "
+            f"{self.image_horizon_instance.confidence})"
+        )
+        try:
+            self.model.plot_result(
+                self.image_container.get_needle_image(ImageFormat.NUMPYARRAY),
+                self.image_container.get_haystack_image_orig_size(
+                    ImageFormat.NUMPYARRAY
+                ),
+                self.image_horizon_instance.needle_edge,
+                self.image_horizon_instance.haystack_edge,
+                self.image_horizon_instance.peakmap,
+                title,
+                self.coord,
             )
+        except ImportError as exc:
+            # Provide feedback if the optional debug dependencies are missing
+            self.view.hint_msg.set(str(exc))

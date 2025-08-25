@@ -15,7 +15,6 @@ requires-python = ">=3.9"
 
 dependencies = [
   "robotframework>=7.0",
-  "matplotlib>=3.10",
   "Pillow>=11.3",
   "pyautogui>=0.9.54",
   "pygetwindow>=0.0.9",
@@ -26,6 +25,12 @@ dependencies = [
   "pywinauto>=0.6.9",
   "scikit-image>=0.25.2",
   "opencv-python-headless>=4.12"
+]
+
+[project.optional-dependencies]
+# Dependencies used only when running the optional debug GUI
+debug = [
+  "matplotlib>=3.10"
 ]
 
 [project.urls]
