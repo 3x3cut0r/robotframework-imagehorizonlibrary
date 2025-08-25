@@ -105,6 +105,13 @@ python3 -m pip install robotframework-imagehorizonlibrary
 
 This will automatically install dependencies as well as their dependencies.
 
+If you want to use the optional Image Debugger that relies on matplotlib,
+install the library with the ``debug`` extra:
+
+```
+python3 -m pip install "robotframework-imagehorizonlibrary[debug]"
+```
+
 ### Windows
 
 ImageHorizonLibrary should work on Windows "out-of-the-box". Just run the
