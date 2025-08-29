@@ -585,14 +585,14 @@ class _StrategyPyautogui:
 
         Returns
         -------
-        list or tuple or None
-            If ``locate_all`` is ``False``, returns a single location tuple or
-            ``None``. If ``locate_all`` is ``True``, returns a list of location
-            tuples (possibly empty).
+        list or tuple
+            When ``locate_all`` is ``False`` a tuple ``(location, score, 1.0)``
+            is returned. ``location`` may be ``None`` if no match was found. When
+            ``locate_all`` is ``True`` a list of such tuples is returned.
         """
 
         ih = self.ih_instance
-        location = None
+
         if haystack_image is None:
             haystack_image = ag.screenshot()
 
@@ -617,14 +617,48 @@ class _StrategyPyautogui:
                     location_res = locate_func(ref_image, haystack_image)
             except ImageNotFoundException as ex:
                 LOGGER.info(ex)
-                pass
+                location_res = None
+
         if locate_all:
-            # convert the generator fo Box objects to a list of tuples
-            location = [tuple(box) for box in location_res]
-        else:
-            # Single Box
-            location = location_res
-        return location
+            locations = [tuple(box) for box in location_res] if location_res else []
+            scores = []
+            if ih.has_cv and locations:
+                try:
+                    haystack_np = np.array(haystack_image)
+                    if haystack_np.ndim == 3:
+                        haystack_gray = cv2.cvtColor(haystack_np, cv2.COLOR_RGB2GRAY)
+                    else:
+                        haystack_gray = haystack_np
+                    needle_gray = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
+                    result = cv2.matchTemplate(
+                        haystack_gray, needle_gray, cv2.TM_CCOEFF_NORMED
+                    )
+                    for x, y, w, h in locations:
+                        scores.append(float(result[y][x]))
+                except Exception:
+                    scores = [None] * len(locations)
+            else:
+                scores = [None] * len(locations)
+            return [(loc, scr, 1.0) for loc, scr in zip(locations, scores)]
+
+        location = location_res
+        score = None
+        if ih.has_cv and location is not None:
+            try:
+                haystack_np = np.array(haystack_image)
+                if haystack_np.ndim == 3:
+                    haystack_gray = cv2.cvtColor(haystack_np, cv2.COLOR_RGB2GRAY)
+                else:
+                    haystack_gray = haystack_np
+                needle_gray = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
+                res = cv2.matchTemplate(
+                    haystack_gray, needle_gray, cv2.TM_CCOEFF_NORMED
+                )
+                _, max_val, _, _ = cv2.minMaxLoc(res)
+                score = float(max_val)
+            except Exception:
+                score = None
+        return (location, score, 1.0)
 
 
 class _StrategyCv2:
