@@ -89,6 +89,10 @@ class TestRecognizeImages(TestCase):
             self.assertFalse(self.lib.does_exist('my_picture'))
             self.assertEqual(len(run_on_failure.mock_calls), 0)
 
+    def test_does_exist_when_locate_returns_array(self):
+        with patch(self._locate, return_value=np.array([0, 0, 10, 10])):
+            self.assertTrue(self.lib.does_exist('my_picture'))
+
     def test_wait_for_happy_path(self):
         from ImageHorizonLibrary import InvalidImageException
         run_on_failure = MagicMock()
