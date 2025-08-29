@@ -253,7 +253,6 @@ class TestRecognizeImages(TestCase):
         self.assertAlmostEqual(scale, scale_factor, delta=0.05)
 
 class TestEdgeDetection(TestCase):
-    @skip("TODO: adjust for OpenCV")
     def test_high_threshold_affects_edge_detection(self):
         from unittest.mock import MagicMock, patch
         import numpy as np
@@ -279,6 +278,7 @@ class TestEdgeDetection(TestCase):
             with patch.object(
                 _StrategyCv2,
                 "_detect_edges",
+                autospec=True,
                 side_effect=lambda self, img, sigma, low, high: img * high,
             ):
                 img = np.array(
