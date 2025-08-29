@@ -4,6 +4,7 @@ import time
 from unittest import TestCase, skip
 from os.path import abspath, dirname, join as path_join
 from unittest.mock import call, MagicMock, patch, ANY
+import cv2
 
 CURDIR = abspath(dirname(__file__))
 TESTIMG_DIR = path_join(CURDIR, 'reference_images')
@@ -173,6 +174,41 @@ class TestRecognizeImages(TestCase):
         for invalid_image_name in (None, 123, 1.2, True, self.lib.__class__()):
             with self.assertRaises(InvalidImageException):
                 self.lib.locate(invalid_image_name)
+
+    def test_strategy_locate_returns_score(self):
+        from PIL import Image
+        from contextlib import contextmanager
+        from ImageHorizonLibrary.recognition import _recognize_images as rec
+        from ImageHorizonLibrary.recognition._recognize_images import _StrategyPyautogui
+
+        # create a haystack image containing the reference picture
+        ref_path = path_join(TESTIMG_DIR, 'my_picture.png')
+        ref_img = Image.open(ref_path)
+        haystack_img = Image.new('RGB', (ref_img.width + 10, ref_img.height + 10), 'white')
+        haystack_img.paste(ref_img, (2, 3))
+
+        # pyautogui.locate is mocked in setUp; define its return value
+        self.mock.locate.return_value = (2, 3, ref_img.width, ref_img.height)
+
+        @contextmanager
+        def no_suppress():
+            yield
+
+        class DummyIH:
+            confidence = 0.5
+            has_cv = True
+
+            def _suppress_keyword_on_failure(self):
+                return no_suppress()
+
+        rec.cv2 = cv2
+        strat = _StrategyPyautogui(DummyIH())
+        location, score, scale = strat._try_locate(ref_path, haystack_image=haystack_img)
+
+        self.assertEqual(location, (2, 3, ref_img.width, ref_img.height))
+        self.assertIsNotNone(score)
+        self.assertGreater(score, 0.9)
+        self.assertEqual(scale, 1.0)
 
 
 class TestEdgeDetection(TestCase):
