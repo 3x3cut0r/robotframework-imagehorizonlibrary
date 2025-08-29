@@ -586,15 +586,85 @@ class _StrategyPyautogui:
         Returns
         -------
         list or tuple
-            When ``locate_all`` is ``False`` a tuple ``(location, score, 1.0)``
+            When ``locate_all`` is ``False`` a tuple ``(location, score, scale)``
             is returned. ``location`` may be ``None`` if no match was found. When
             ``locate_all`` is ``True`` a list of such tuples is returned.
         """
-
         ih = self.ih_instance
 
         if haystack_image is None:
             haystack_image = ag.screenshot()
+
+        if getattr(ih, "has_cv", False) and getattr(ih, "scale_enabled", False):
+            haystack_np = np.array(haystack_image)
+            if haystack_np.ndim == 3:
+                haystack_gray = cv2.cvtColor(haystack_np, cv2.COLOR_RGB2GRAY)
+            else:
+                haystack_gray = haystack_np
+            needle_gray = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
+            scales = np.linspace(ih.scale_min, ih.scale_max, ih.scale_steps)
+            confidence = ih.confidence or 0.999
+            if locate_all:
+                matches = []
+                for scale in scales:
+                    scaled_height = max(1, int(needle_gray.shape[0] * scale))
+                    scaled_width = max(1, int(needle_gray.shape[1] * scale))
+                    if (
+                        scaled_height > haystack_gray.shape[0]
+                        or scaled_width > haystack_gray.shape[1]
+                    ):
+                        continue
+                    scaled_needle = cv2.resize(
+                        needle_gray,
+                        (scaled_width, scaled_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                    res = cv2.matchTemplate(
+                        haystack_gray, scaled_needle, cv2.TM_CCOEFF_NORMED
+                    )
+                    peaks = np.where(res >= confidence)
+                    for y, x in zip(*peaks):
+                        matches.append(
+                            (
+                                (x, y, scaled_width, scaled_height),
+                                float(res[y][x]),
+                                scale,
+                            )
+                        )
+                return matches
+            else:
+                best_loc = None
+                best_score = -1.0
+                best_scale = 1.0
+                for scale in scales:
+                    scaled_height = max(1, int(needle_gray.shape[0] * scale))
+                    scaled_width = max(1, int(needle_gray.shape[1] * scale))
+                    if (
+                        scaled_height > haystack_gray.shape[0]
+                        or scaled_width > haystack_gray.shape[1]
+                    ):
+                        continue
+                    scaled_needle = cv2.resize(
+                        needle_gray,
+                        (scaled_width, scaled_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                    res = cv2.matchTemplate(
+                        haystack_gray, scaled_needle, cv2.TM_CCOEFF_NORMED
+                    )
+                    _, max_val, _, max_loc = cv2.minMaxLoc(res)
+                    if max_val > best_score:
+                        best_score = float(max_val)
+                        best_loc = (
+                            max_loc[0],
+                            max_loc[1],
+                            scaled_width,
+                            scaled_height,
+                        )
+                        best_scale = scale
+                if best_loc is None or best_score < confidence:
+                    return (None, best_score if best_score >= 0 else None, best_scale)
+                return (best_loc, best_score, best_scale)
 
         if locate_all:
             locate_func = ag.locateAll
@@ -659,8 +729,6 @@ class _StrategyPyautogui:
             except Exception:
                 score = None
         return (location, score, 1.0)
-
-
 class _StrategyCv2:
     """Image matching strategy using OpenCV edge detection."""
 

@@ -197,6 +197,10 @@ class TestRecognizeImages(TestCase):
         class DummyIH:
             confidence = 0.5
             has_cv = True
+            scale_enabled = False
+            scale_min = 0.8
+            scale_max = 1.2
+            scale_steps = 9
 
             def _suppress_keyword_on_failure(self):
                 return no_suppress()
@@ -210,6 +214,42 @@ class TestRecognizeImages(TestCase):
         self.assertGreater(score, 0.9)
         self.assertEqual(scale, 1.0)
 
+    def test_strategy_locate_handles_scaling(self):
+        from PIL import Image
+        from contextlib import contextmanager
+        from ImageHorizonLibrary.recognition import _recognize_images as rec
+        from ImageHorizonLibrary.recognition._recognize_images import _StrategyPyautogui
+
+        ref_path = path_join(TESTIMG_DIR, 'my_picture.png')
+        ref_img = Image.open(ref_path)
+        scale_factor = 1.2
+        scaled_ref = ref_img.resize((int(ref_img.width * scale_factor), int(ref_img.height * scale_factor)))
+        haystack_img = Image.new('RGB', (scaled_ref.width + 10, scaled_ref.height + 10), 'white')
+        haystack_img.paste(scaled_ref, (4, 5))
+
+        @contextmanager
+        def no_suppress():
+            yield
+
+        class DummyIH:
+            confidence = 0.8
+            has_cv = True
+            scale_enabled = True
+            scale_min = 0.8
+            scale_max = 1.4
+            scale_steps = 7
+
+            def _suppress_keyword_on_failure(self):
+                return no_suppress()
+
+        rec.cv2 = cv2
+        strat = _StrategyPyautogui(DummyIH())
+        location, score, scale = strat._try_locate(ref_path, haystack_image=haystack_img)
+
+        self.assertEqual(location, (4, 5, scaled_ref.width, scaled_ref.height))
+        self.assertIsNotNone(score)
+        self.assertGreater(score, 0.9)
+        self.assertAlmostEqual(scale, scale_factor, delta=0.05)
 
 class TestEdgeDetection(TestCase):
     @skip("TODO: adjust for OpenCV")
