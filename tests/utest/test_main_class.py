@@ -59,18 +59,16 @@ class TestMainClass(TestCase):
                '"from ImageHorizonLibrary import ImageHorizonLibrary"')
         return cmd.format(jython=jython, path=path)
 
+    @patch.dict('sys.modules', {'tkinter': None})
     def test_importing_fails_on_java(self):
-        # This test checks that importing fails when any of the dependencies
-        # are not installed or, at least, importing Tkinter fails because
-        # it's not supported on Jython.
-        if 'JYTHON_HOME' not in os.environ:
-            self.skipTest('%s() was not run because JYTHON_HOME '
-                          'was not set.' % self._testMethodName)
-        jython_cmd = path_join(os.environ['JYTHON_HOME'], 'bin', 'jython')
-        cmd = self._get_cmd(jython_cmd, SRCDIR)
-        p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-        _, stderr = p.communicate()
-        self.assertNotEqual(stderr, '')
+        """Importing should fail when Tkinter is unavailable."""
+        from importlib import import_module
+        from ImageHorizonLibrary.errors import ImageHorizonLibraryError
+        import sys
+
+        sys.modules.pop('ImageHorizonLibrary', None)
+        with self.assertRaises(ImageHorizonLibraryError):
+            import_module('ImageHorizonLibrary')
 
     def test_set_reference_folder(self):
         self.assertEqual(self.lib.reference_folder, None)
