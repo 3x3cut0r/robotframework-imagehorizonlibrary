@@ -67,7 +67,7 @@ class _RecognizeImages(object):
             raise ReferenceFolderException(
                 "Reference folder is invalid: " '"%s"' % self.reference_folder
             )
-        if not path or not isinstance(path, str):
+        if not isinstance(path, str) or path == "":
             raise InvalidImageException('"%s" is invalid image name.' % path)
         path = str(path.lower().replace(" ", "_"))
         path = abspath(path_join(self.reference_folder, path))

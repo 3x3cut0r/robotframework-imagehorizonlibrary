@@ -227,7 +227,14 @@ class TestRecognizeImages(TestCase):
     def test_locate_with_invalid_image_name(self):
         from ImageHorizonLibrary import InvalidImageException
 
-        for invalid_image_name in (None, 123, 1.2, True, self.lib.__class__()):
+        for invalid_image_name in (
+            None,
+            123,
+            1.2,
+            True,
+            self.lib.__class__(),
+            np.array(["foo", "bar"]),
+        ):
             with self.assertRaises(InvalidImageException):
                 self.lib.locate(invalid_image_name)
 
