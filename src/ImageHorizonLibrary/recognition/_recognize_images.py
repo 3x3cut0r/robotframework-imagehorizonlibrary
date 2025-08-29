@@ -585,16 +585,86 @@ class _StrategyPyautogui:
 
         Returns
         -------
-        list or tuple or None
-            If ``locate_all`` is ``False``, returns a single location tuple or
-            ``None``. If ``locate_all`` is ``True``, returns a list of location
-            tuples (possibly empty).
+        list or tuple
+            When ``locate_all`` is ``False`` a tuple ``(location, score, scale)``
+            is returned. ``location`` may be ``None`` if no match was found. When
+            ``locate_all`` is ``True`` a list of such tuples is returned.
         """
-
         ih = self.ih_instance
-        location = None
+
         if haystack_image is None:
             haystack_image = ag.screenshot()
+
+        if getattr(ih, "has_cv", False) and getattr(ih, "scale_enabled", False):
+            haystack_np = np.array(haystack_image)
+            if haystack_np.ndim == 3:
+                haystack_gray = cv2.cvtColor(haystack_np, cv2.COLOR_RGB2GRAY)
+            else:
+                haystack_gray = haystack_np
+            needle_gray = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
+            scales = np.linspace(ih.scale_min, ih.scale_max, ih.scale_steps)
+            confidence = ih.confidence or 0.999
+            if locate_all:
+                matches = []
+                for scale in scales:
+                    scaled_height = max(1, int(needle_gray.shape[0] * scale))
+                    scaled_width = max(1, int(needle_gray.shape[1] * scale))
+                    if (
+                        scaled_height > haystack_gray.shape[0]
+                        or scaled_width > haystack_gray.shape[1]
+                    ):
+                        continue
+                    scaled_needle = cv2.resize(
+                        needle_gray,
+                        (scaled_width, scaled_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                    res = cv2.matchTemplate(
+                        haystack_gray, scaled_needle, cv2.TM_CCOEFF_NORMED
+                    )
+                    peaks = np.where(res >= confidence)
+                    for y, x in zip(*peaks):
+                        matches.append(
+                            (
+                                (x, y, scaled_width, scaled_height),
+                                float(res[y][x]),
+                                scale,
+                            )
+                        )
+                return matches
+            else:
+                best_loc = None
+                best_score = -1.0
+                best_scale = 1.0
+                for scale in scales:
+                    scaled_height = max(1, int(needle_gray.shape[0] * scale))
+                    scaled_width = max(1, int(needle_gray.shape[1] * scale))
+                    if (
+                        scaled_height > haystack_gray.shape[0]
+                        or scaled_width > haystack_gray.shape[1]
+                    ):
+                        continue
+                    scaled_needle = cv2.resize(
+                        needle_gray,
+                        (scaled_width, scaled_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                    res = cv2.matchTemplate(
+                        haystack_gray, scaled_needle, cv2.TM_CCOEFF_NORMED
+                    )
+                    _, max_val, _, max_loc = cv2.minMaxLoc(res)
+                    if max_val > best_score:
+                        best_score = float(max_val)
+                        best_loc = (
+                            max_loc[0],
+                            max_loc[1],
+                            scaled_width,
+                            scaled_height,
+                        )
+                        best_scale = scale
+                if best_loc is None or best_score < confidence:
+                    return (None, best_score if best_score >= 0 else None, best_scale)
+                return (best_loc, best_score, best_scale)
 
         if locate_all:
             locate_func = ag.locateAll
@@ -617,16 +687,48 @@ class _StrategyPyautogui:
                     location_res = locate_func(ref_image, haystack_image)
             except ImageNotFoundException as ex:
                 LOGGER.info(ex)
-                pass
+                location_res = None
+
         if locate_all:
-            # convert the generator fo Box objects to a list of tuples
-            location = [tuple(box) for box in location_res]
-        else:
-            # Single Box
-            location = location_res
-        return location
+            locations = [tuple(box) for box in location_res] if location_res else []
+            scores = []
+            if ih.has_cv and locations:
+                try:
+                    haystack_np = np.array(haystack_image)
+                    if haystack_np.ndim == 3:
+                        haystack_gray = cv2.cvtColor(haystack_np, cv2.COLOR_RGB2GRAY)
+                    else:
+                        haystack_gray = haystack_np
+                    needle_gray = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
+                    result = cv2.matchTemplate(
+                        haystack_gray, needle_gray, cv2.TM_CCOEFF_NORMED
+                    )
+                    for x, y, w, h in locations:
+                        scores.append(float(result[y][x]))
+                except Exception:
+                    scores = [None] * len(locations)
+            else:
+                scores = [None] * len(locations)
+            return [(loc, scr, 1.0) for loc, scr in zip(locations, scores)]
 
-
+        location = location_res
+        score = None
+        if ih.has_cv and location is not None:
+            try:
+                haystack_np = np.array(haystack_image)
+                if haystack_np.ndim == 3:
+                    haystack_gray = cv2.cvtColor(haystack_np, cv2.COLOR_RGB2GRAY)
+                else:
+                    haystack_gray = haystack_np
+                needle_gray = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
+                res = cv2.matchTemplate(
+                    haystack_gray, needle_gray, cv2.TM_CCOEFF_NORMED
+                )
+                _, max_val, _, _ = cv2.minMaxLoc(res)
+                score = float(max_val)
+            except Exception:
+                score = None
+        return (location, score, 1.0)
 class _StrategyCv2:
     """Image matching strategy using OpenCV edge detection."""
 
