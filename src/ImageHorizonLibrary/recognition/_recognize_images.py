@@ -465,7 +465,8 @@ class _RecognizeImages(object):
         """
         with self._suppress_keyword_on_failure():
             try:
-                return bool(self._locate(reference_image, log_it=True))
+                self._locate(reference_image, log_it=True)
+                return True
             except ImageNotFoundException:
                 return False
 
