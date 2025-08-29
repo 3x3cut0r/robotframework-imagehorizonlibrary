@@ -384,6 +384,8 @@ class _RecognizeImages(object):
             else:
                 loc, scr, scl = result, None, 1.0
             if loc is not None:
+                if isinstance(loc, np.ndarray):
+                    loc = tuple(loc.tolist())
                 location, score, scale = loc, scr, scl
                 break
 
@@ -691,7 +693,10 @@ class _StrategyPyautogui:
                 location_res = None
 
         if locate_all:
-            locations = [tuple(box) for box in location_res] if location_res else []
+            if location_res is None:
+                locations = []
+            else:
+                locations = [tuple(box) for box in location_res]
             scores = []
             if ih.has_cv and locations:
                 try:
