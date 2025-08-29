@@ -102,6 +102,22 @@ class TestRecognizeImages(TestCase):
             x, y, score, scale = self.lib._locate('my_picture')
         self.assertEqual((x, y, score, scale), (5, 5, None, 1.0))
 
+    def test_locate_handles_2d_array_from_strategy(self):
+        loc = np.array([[0, 0, 10, 10]])
+        self.mock.center.return_value = MagicMock(x=5, y=5)
+        self.lib.pixel_ratio = 1.0
+        with patch.object(self.lib, '_try_locate', return_value=loc):
+            x, y, score, scale = self.lib._locate('my_picture')
+        self.assertEqual((x, y, score, scale), (5, 5, None, 1.0))
+
+    def test_locate_handles_numpy_triplet(self):
+        result = np.array([(0, 0, 10, 10), 0.8, 1.0], dtype=object)
+        self.mock.center.return_value = MagicMock(x=5, y=5)
+        self.lib.pixel_ratio = 1.0
+        with patch.object(self.lib, '_try_locate', return_value=result):
+            x, y, score, scale = self.lib._locate('my_picture')
+        self.assertEqual((x, y, score, scale), (5, 5, 0.8, 1.0))
+
     def test_try_locate_all_handles_numpy_array(self):
         from ImageHorizonLibrary.recognition._recognize_images import (
             _StrategyPyautogui,
