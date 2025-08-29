@@ -102,6 +102,25 @@ class TestRecognizeImages(TestCase):
             x, y, score, scale = self.lib._locate('my_picture')
         self.assertEqual((x, y, score, scale), (5, 5, None, 1.0))
 
+    def test_try_locate_all_handles_numpy_array(self):
+        from ImageHorizonLibrary.recognition._recognize_images import (
+            _StrategyPyautogui,
+            _RecognizeImages,
+        )
+
+        class Dummy(_RecognizeImages):
+            def __init__(self):
+                self.has_cv = False
+                self.confidence = None
+                self.scale_enabled = False
+                self.keyword_on_failure = None
+
+        ih = Dummy()
+        strat = _StrategyPyautogui(ih)
+        self.mock.locateAll.return_value = np.array([[0, 0, 10, 10]])
+        result = strat._try_locate('dummy', haystack_image=np.zeros((1, 1, 3)), locate_all=True)
+        self.assertEqual(result, [((0, 0, 10, 10), None, 1.0)])
+
     def test_wait_for_happy_path(self):
         from ImageHorizonLibrary import InvalidImageException
         run_on_failure = MagicMock()
@@ -265,6 +284,7 @@ class TestRecognizeImages(TestCase):
         self.assertGreater(score, 0.9)
         self.assertAlmostEqual(scale, scale_factor, delta=0.05)
 
+        
 class TestEdgeDetection(TestCase):
     def test_high_threshold_affects_edge_detection(self):
         from unittest.mock import MagicMock, patch
