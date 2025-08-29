@@ -5,6 +5,7 @@ from unittest import TestCase, skip
 from os.path import abspath, dirname, join as path_join
 from unittest.mock import call, MagicMock, patch, ANY
 import cv2
+import numpy as np
 
 CURDIR = abspath(dirname(__file__))
 TESTIMG_DIR = path_join(CURDIR, 'reference_images')
@@ -359,19 +360,18 @@ class TestMultiScaleSearch(TestCase):
 
 
 class TestPreprocessingAndValidation(TestCase):
-    @skip("TODO: adjust for OpenCV")
     def test_gaussian_preprocess_calls_cv2(self):
-        from unittest.mock import MagicMock, patch
-        import numpy as np
         fake_cv2 = MagicMock()
         fake_cv2.GaussianBlur.return_value = np.zeros((5, 5), dtype=np.uint8)
         fake_cv2.Canny.return_value = np.zeros((5, 5), dtype=np.uint8)
-        with patch.dict("sys.modules", {"pyautogui": MagicMock(), "cv2": fake_cv2}):
-            from ImageHorizonLibrary.recognition import _recognize_images as rec
+
+        with patch.dict("sys.modules", {"pyautogui": MagicMock()}):
+            from ImageHorizonLibrary.recognition import _recognize_images
             from ImageHorizonLibrary.recognition._recognize_images import _StrategyCv2
 
+        with patch.object(_recognize_images, "cv2", fake_cv2):
             class DummyIH:
-                edge_sigma = 1
+                edge_sigma = 0
                 edge_low_threshold = 0.1
                 edge_high_threshold = 0.2
                 edge_preprocess = "gaussian"
@@ -381,8 +381,10 @@ class TestPreprocessingAndValidation(TestCase):
             ih = DummyIH()
             strategy = _StrategyCv2(ih)
             img = np.zeros((5, 5), dtype=np.uint8)
-            strategy._detect_edges(img, ih.edge_sigma, ih.edge_low_threshold, ih.edge_high_threshold)
-            assert fake_cv2.GaussianBlur.called
+            strategy._detect_edges(
+                img, ih.edge_sigma, ih.edge_low_threshold, ih.edge_high_threshold
+            )
+            fake_cv2.GaussianBlur.assert_called_once_with(ANY, (3, 3), 0)
 
     def test_match_validation_uses_opencv(self):
         from unittest.mock import MagicMock, patch
