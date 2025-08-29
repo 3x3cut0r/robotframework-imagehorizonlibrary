@@ -57,6 +57,4 @@ log.html
 *-screenshot-*.png
 
 # IDE and editor files
-.vscode/
-.idea/
 *.swp
