@@ -284,6 +284,7 @@ class TestRecognizeImages(TestCase):
         self.assertGreater(score, 0.9)
         self.assertAlmostEqual(scale, scale_factor, delta=0.05)
 
+        
 class TestEdgeDetection(TestCase):
     def test_high_threshold_affects_edge_detection(self):
         from unittest.mock import MagicMock, patch
