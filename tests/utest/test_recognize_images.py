@@ -19,6 +19,7 @@ class TestRecognizeImages(TestCase):
         self.lib = ImageHorizonLibrary(reference_folder=TESTIMG_DIR)
         self.locate = 'ImageHorizonLibrary.ImageHorizonLibrary.locate'
         self._locate = 'ImageHorizonLibrary.ImageHorizonLibrary._locate'
+        self._try_locate = 'ImageHorizonLibrary.ImageHorizonLibrary._try_locate'
 
     def tearDown(self):
         self.mock.reset_mock()
@@ -92,6 +93,14 @@ class TestRecognizeImages(TestCase):
     def test_does_exist_when_locate_returns_array(self):
         with patch(self._locate, return_value=np.array([0, 0, 10, 10])):
             self.assertTrue(self.lib.does_exist('my_picture'))
+
+    def test_locate_handles_array_from_strategy(self):
+        loc = np.array([0, 0, 10, 10])
+        self.mock.center.return_value = MagicMock(x=5, y=5)
+        self.lib.pixel_ratio = 1.0
+        with patch.object(self.lib, '_try_locate', return_value=loc):
+            x, y, score, scale = self.lib._locate('my_picture')
+        self.assertEqual((x, y, score, scale), (5, 5, None, 1.0))
 
     def test_wait_for_happy_path(self):
         from ImageHorizonLibrary import InvalidImageException

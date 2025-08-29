@@ -384,6 +384,8 @@ class _RecognizeImages(object):
             else:
                 loc, scr, scl = result, None, 1.0
             if loc is not None:
+                if isinstance(loc, np.ndarray):
+                    loc = tuple(loc.tolist())
                 location, score, scale = loc, scr, scl
                 break
 
