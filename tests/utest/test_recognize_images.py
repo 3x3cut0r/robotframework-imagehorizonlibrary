@@ -300,40 +300,36 @@ class TestEdgeDetection(TestCase):
 
 
 class TestMultiScaleSearch(TestCase):
-    @skip("TODO: adjust for OpenCV")
     def test_finds_scaled_reference(self):
+        from contextlib import contextmanager
         from unittest.mock import MagicMock, patch
         import numpy as np
-        from contextlib import contextmanager
 
-        fake_cv2 = MagicMock()
-        with patch.dict("sys.modules", {"pyautogui": MagicMock(), "cv2": fake_cv2}):
-            from ImageHorizonLibrary.recognition import _recognize_images as rec
+        scale_factor = 1.2
+        ref_path = path_join(TESTIMG_DIR, "my_picture.png")
+        needle = cv2.imread(ref_path, cv2.IMREAD_GRAYSCALE)
+        scaled_ref = cv2.resize(
+            needle,
+            (int(needle.shape[1] * scale_factor), int(needle.shape[0] * scale_factor)),
+        )
+        haystack_img = np.full(
+            (scaled_ref.shape[0] + 10, scaled_ref.shape[1] + 10),
+            255,
+            dtype=np.uint8,
+        )
+        haystack_img[5 : 5 + scaled_ref.shape[0], 4 : 4 + scaled_ref.shape[1]] = scaled_ref
+
+        with patch.dict("sys.modules", {"pyautogui": MagicMock()}):
             from ImageHorizonLibrary.recognition._recognize_images import _StrategyCv2
 
-        fake_cv2.imread.return_value = np.zeros((10, 10), dtype=np.uint8)
-        fake_cv2.resize.side_effect = lambda img, dsize, interpolation=0: np.zeros((dsize[1], dsize[0]), dtype=np.uint8)
-
-        def fake_match_template(haystack, needle, method):
-            if haystack.shape == needle.shape:
-                return np.array([[1.0]], dtype=float)
-            return np.zeros((1, 1), dtype=float)
-
-        fake_cv2.matchTemplate.side_effect = fake_match_template
-
-        def fake_minmax(mat):
-            return (0, float(mat.max()), (0, 0), (0, 0))
-
-        fake_cv2.minMaxLoc.side_effect = fake_minmax
-
         class DummyIH:
-            confidence = 0.9
+            confidence = 0.8
             edge_sigma = 1
             edge_low_threshold = 0.1
             edge_high_threshold = 0.3
             edge_preprocess = None
             edge_kernel_size = 3
-            has_cv = False
+            has_cv = True
             validate_match = False
             validation_margin = 0
             scale_enabled = True
@@ -345,17 +341,16 @@ class TestMultiScaleSearch(TestCase):
             def _suppress_keyword_on_failure(self):
                 yield None
 
-        ih = DummyIH()
-        strategy = _StrategyCv2(ih)
-        strategy.detect_edges = lambda img: img
+        strategy = _StrategyCv2(DummyIH())
 
-        scale_factor = 1.2
-        haystack_scaled = np.zeros((int(10 * scale_factor), int(10 * scale_factor)))
-
-        location, score, scale = strategy._try_locate("dummy", haystack_image=haystack_scaled)
+        location, score, scale = strategy._try_locate(ref_path, haystack_image=haystack_img)
         self.assertIsNotNone(location)
+        self.assertEqual(
+            location,
+            (4, 5, scaled_ref.shape[1], scaled_ref.shape[0]),
+        )
         self.assertAlmostEqual(scale, scale_factor, delta=0.05)
-        self.assertGreater(score, 0.9)
+        self.assertGreater(score, 0.8)
 
 
 class TestPreprocessingAndValidation(TestCase):
