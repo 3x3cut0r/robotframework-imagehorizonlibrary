@@ -214,7 +214,6 @@ class TestRecognizeImages(TestCase):
         self.assertGreater(score, 0.9)
         self.assertEqual(scale, 1.0)
 
-
     def test_strategy_locate_handles_scaling(self):
         from PIL import Image
         from contextlib import contextmanager
