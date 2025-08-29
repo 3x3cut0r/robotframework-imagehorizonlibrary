@@ -919,7 +919,7 @@ class _StrategyCv2:
         sigma = float(np.clip(std * 3, 0.1, 5.0))
 
         img_uint8 = (img_float * 255).astype(np.uint8)
-        _, t = cv2.threshold(img_uint8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        t, _ = cv2.threshold(img_uint8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         t = t / 255.0
         low = float(max(0.0, t * 0.5))
         high = float(min(1.0, t * 1.5))
