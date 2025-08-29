@@ -378,14 +378,28 @@ class _RecognizeImages(object):
         score = None
         scale = 1.0
         for ref_image in reference_images:
-            result = self._try_locate(ref_image)
+            try:
+                result = self._try_locate(ref_image)
+            except Exception as e:  # pragma: no cover - unexpected failures
+                LOGGER.exception(
+                    'Unexpected error locating "%s": %s', ref_image, e
+                )
+                raise
+
             if isinstance(result, tuple) and len(result) == 3:
                 loc, scr, scl = result
+            elif isinstance(result, np.ndarray) and result.shape == (3,):
+                loc, scr, scl = result[0], result[1], result[2]
             else:
                 loc, scr, scl = result, None, 1.0
+
             if loc is not None:
                 if isinstance(loc, np.ndarray):
-                    loc = tuple(loc.tolist())
+                    loc = tuple(np.asarray(loc).flatten().tolist())
+                if isinstance(scr, np.ndarray):
+                    scr = float(np.asarray(scr).flat[0])
+                if isinstance(scl, np.ndarray):
+                    scl = float(np.asarray(scl).flat[0])
                 location, score, scale = loc, scr, scl
                 break
 
