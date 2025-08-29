@@ -13,6 +13,7 @@ except Exception:  # pragma: no cover - graceful fallback when cv2 is missing
     cv2 = None
 
 import numpy as np
+import traceback
 
 
 from ..errors import ImageNotFoundException, InvalidImageException
@@ -381,8 +382,8 @@ class _RecognizeImages(object):
             try:
                 result = self._try_locate(ref_image)
             except Exception as e:  # pragma: no cover - unexpected failures
-                LOGGER.exception(
-                    'Unexpected error locating "%s": %s', ref_image, e
+                LOGGER.error(
+                    f'Unexpected error locating "{ref_image}": {e}\n{traceback.format_exc()}'
                 )
                 raise
 

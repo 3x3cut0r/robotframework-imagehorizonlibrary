@@ -118,6 +118,13 @@ class TestRecognizeImages(TestCase):
             x, y, score, scale = self.lib._locate('my_picture')
         self.assertEqual((x, y, score, scale), (5, 5, 0.8, 1.0))
 
+    def test_locate_logs_try_locate_errors(self):
+        with patch.object(self.lib, '_try_locate', side_effect=ValueError('boom')):
+            with patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+                with self.assertRaises(ValueError):
+                    self.lib._locate('my_picture')
+                log.error.assert_called()
+
     def test_try_locate_all_handles_numpy_array(self):
         from ImageHorizonLibrary.recognition._recognize_images import (
             _StrategyPyautogui,
