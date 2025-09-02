@@ -20,12 +20,18 @@ class FakeView:
         self.after_called = None
         self.after_cancel_called = None
 
-    def wm_state(self, state):
-        if state == 'iconic' and self.fail_minimise:
+    def iconify(self):
+        if self.fail_minimise:
             raise Exception('minimise failed')
-        if state == 'normal' and self.fail_restore:
+        self.state_calls.append('iconify')
+
+    def deiconify(self):
+        if self.fail_restore:
             raise Exception('restore failed')
-        self.state_calls.append(state)
+        self.state_calls.append('deiconify')
+
+    def lift(self):
+        self.state_calls.append('lift')
 
     def after(self, delay, func):
         self.after_called = (delay, func)
@@ -51,7 +57,7 @@ class TestTakeScreenshot(TestCase):
         result = ctrl._take_screenshot()
 
         self.assertEqual(result, 'img')
-        self.assertEqual(view.state_calls, ['iconic', 'normal'])
+        self.assertEqual(view.state_calls, ['iconify', 'deiconify', 'lift'])
         self.assertEqual(view.after_called[0], 10000)
         self.assertEqual(view.after_cancel_called, 'id')
 
@@ -64,7 +70,7 @@ class TestTakeScreenshot(TestCase):
         with self.assertRaises(RuntimeError):
             ctrl._take_screenshot()
 
-        self.assertEqual(view.state_calls, ['iconic', 'normal'])
+        self.assertEqual(view.state_calls, ['iconify', 'deiconify', 'lift'])
         self.assertEqual(view.after_cancel_called, 'id')
 
     def test_minimise_failure_raises_runtime_error(self):
