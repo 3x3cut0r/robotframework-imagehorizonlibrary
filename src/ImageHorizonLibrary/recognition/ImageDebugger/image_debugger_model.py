@@ -2,14 +2,25 @@
 
 import importlib
 import pyautogui as ag
+from robot.api import logger as LOGGER
 
 
 class UILocatorModel:
     """Encapsulates data operations for the debugger."""
 
     def capture_desktop(self):
-        """Return a screenshot of the current desktop."""
-        return ag.screenshot()
+        """Return a screenshot of the current desktop.
+
+        Raises
+        ------
+        RuntimeError
+            If capturing the screenshot fails.
+        """
+        try:
+            return ag.screenshot()
+        except Exception as exc:  # pragma: no cover - depends on system libs
+            LOGGER.error(f"Capturing desktop screenshot failed: {exc}")
+            raise RuntimeError("Failed to capture desktop screenshot") from exc
 
     def change_color_of_label(self, num_of_matches_found) -> str:
         """Return a colour based on number of matches."""
