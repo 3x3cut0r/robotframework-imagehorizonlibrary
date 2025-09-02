@@ -428,7 +428,6 @@ class _RecognizeImages(object):
             self._run_on_failure()
             raise ImageNotFoundException(
                 reference_image,
-                matches=matches,
                 best_score=best_score,
                 confidence=confidence,
             )

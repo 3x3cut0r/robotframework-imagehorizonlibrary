@@ -7,7 +7,7 @@ class ImageNotFoundException(Exception):
     def __init__(
         self,
         image_name,
-        matches=0,
+        matches=None,
         best_score=None,
         confidence=None,
     ):
@@ -18,7 +18,8 @@ class ImageNotFoundException(Exception):
         image_name : str
             Name of the image that was not found.
         matches : int, optional
-            Number of matches detected above the confidence threshold.
+            Number of matches detected above the confidence threshold. Defaults
+            to ``None``.
         best_score : float, optional
             Highest score returned by the matching algorithm.
         confidence : float, optional
@@ -33,7 +34,7 @@ class ImageNotFoundException(Exception):
     def __str__(self):
         msg = 'Reference image "%s" was not found on screen' % self.image_name
         details = []
-        if self.matches is not None:
+        if self.matches:
             details.append(f"matches found: {self.matches}")
         if self.best_score is not None and self.confidence is not None:
             details.append(
