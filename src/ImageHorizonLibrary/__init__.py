@@ -152,7 +152,7 @@ class ImageHorizonLibrary(
     - apply the `template_matching` routine to get a [https://en.wikipedia.org/wiki/Cross-correlation|cross correlation] matrix of values from -1 (no correlation) to +1 (perfect correlation).
     - Filter out only those coordinates with values greater than the ``confidence`` level, take the max
 
-    The keyword `Debug Image` opens a debugger UI where confidence level, Gaussian sigma and low/high thresholds can be tested and adjusted to individual needs. It also accepts an optional ``reference_folder`` argument to inspect images stored in a different location.
+    The keyword `Debug Image` opens a debugger UI where confidence level, Gaussian sigma and low/high thresholds can be tested and adjusted to individual needs. It also accepts optional ``reference_folder`` and ``minimize`` arguments to inspect images stored in a different location or keep the debugger window visible during screenshots.
 
     Edge detection costs some extra CPU time; you should always first try
     to use the ``default`` strategy and only selectively switch to ``edge``

@@ -143,7 +143,7 @@ Generated keyword documentation is available in
 | Copy From The Below Of | Copy text below a reference image. |
 | Copy From The Left Of | Copy text left of a reference image. |
 | Copy From The Right Of | Copy text right of a reference image. |
-| Debug Image | Halts the test execution and opens the image debugger UI; accepts an optional reference folder. |
+| Debug Image | Halts the test execution and opens the image debugger UI; accepts an optional reference folder and a ``minimize`` flag to keep the debugger window visible. |
 | Does Exist | Check whether a reference image exists on the screen. |
 | Double Click | Double-click with the specified mouse button. |
 | Get Clipboard Content | Return the current text from the system clipboard. |
