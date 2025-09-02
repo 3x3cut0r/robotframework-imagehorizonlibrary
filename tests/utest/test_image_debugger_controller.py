@@ -13,12 +13,19 @@ patcher.stop()
 
 
 class FakeView:
-    def __init__(self, fail_minimise=False, fail_restore=False):
+    def __init__(self, fail_minimise=False, fail_restore=False, initial_state='normal'):
         self.fail_minimise = fail_minimise
         self.fail_restore = fail_restore
         self.state_calls = []
         self.after_called = None
         self.after_cancel_called = None
+        self._state = initial_state
+
+    def state(self, value=None):
+        if value is None:
+            return self._state
+        self._state = value
+        self.state_calls.append(f'state({value})')
 
     def iconify(self):
         if self.fail_minimise:
@@ -57,7 +64,7 @@ class TestTakeScreenshot(TestCase):
         result = ctrl._take_screenshot()
 
         self.assertEqual(result, 'img')
-        self.assertEqual(view.state_calls, ['iconify', 'deiconify', 'lift'])
+        self.assertEqual(view.state_calls, ['iconify', 'deiconify', 'state(normal)', 'lift'])
         self.assertEqual(view.after_called[0], 10000)
         self.assertEqual(view.after_cancel_called, 'id')
 
@@ -70,7 +77,7 @@ class TestTakeScreenshot(TestCase):
         with self.assertRaises(RuntimeError):
             ctrl._take_screenshot()
 
-        self.assertEqual(view.state_calls, ['iconify', 'deiconify', 'lift'])
+        self.assertEqual(view.state_calls, ['iconify', 'deiconify', 'state(normal)', 'lift'])
         self.assertEqual(view.after_cancel_called, 'id')
 
     def test_minimise_failure_raises_runtime_error(self):
@@ -82,3 +89,13 @@ class TestTakeScreenshot(TestCase):
 
         self.assertIsNone(view.after_called)
         self.assertIsNone(view.after_cancel_called)
+
+    def test_restores_zoomed_state(self):
+        model = MagicMock()
+        model.capture_desktop.return_value = 'img'
+        view = FakeView(initial_state='zoomed')
+        ctrl = self._get_controller(view=view, model=model)
+
+        ctrl._take_screenshot()
+
+        self.assertIn('state(zoomed)', view.state_calls)
