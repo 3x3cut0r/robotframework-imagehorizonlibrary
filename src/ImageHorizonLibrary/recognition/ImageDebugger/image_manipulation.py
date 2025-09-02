@@ -4,6 +4,11 @@ from PIL import Image, ImageTk
 from enum import Enum, unique
 import numpy as np
 
+try:
+    RESAMPLE_FILTER = Image.Resampling.LANCZOS
+except AttributeError:  # Pillow<9.1
+    RESAMPLE_FILTER = Image.LANCZOS
+
 
 @unique
 class ImageFormat(Enum):
@@ -28,7 +33,7 @@ class ImageContainer:
 
         if is_haystack_img:
             self._haystack_image_orig_size = _PIL_img
-            self._haystack_image = _PIL_img.resize((384, 216), Image.ANTIALIAS)
+            self._haystack_image = _PIL_img.resize((384, 216), RESAMPLE_FILTER)
         else:
             self._needle_image = {'Path': img, 'Obj': _PIL_img}
 

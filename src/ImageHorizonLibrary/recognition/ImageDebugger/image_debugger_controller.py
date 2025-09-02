@@ -9,6 +9,7 @@ import os, glob
 import pyperclip
 import numpy as np
 import webbrowser
+from robot.api import logger as LOGGER
 
 
 class UILocatorController:
@@ -114,76 +115,110 @@ class UILocatorController:
     
     def on_click_run_default_strategy(self):
         """Execute recognition using the default strategy."""
-        self.image_horizon_instance.set_strategy('default')
-        self.image_horizon_instance.confidence = float(self.view.scale_conf_lvl_ag.get())
-        self.image_container.save_to_img_container(self._take_screenshot(), is_haystack_img=True)
+        try:
+            self.image_horizon_instance.set_strategy('default')
+            self.image_horizon_instance.confidence = float(self.view.scale_conf_lvl_ag.get())
+            self.image_container.save_to_img_container(
+                self._take_screenshot(), is_haystack_img=True
+            )
 
-        matcher = Pyautogui(self.image_container, self.image_horizon_instance)
-        self.coord = matcher.find_num_of_matches()
-        matcher.highlight_matches()
+            matcher = Pyautogui(self.image_container, self.image_horizon_instance)
+            self.coord = matcher.find_num_of_matches()
+            matcher.highlight_matches()
 
-        self.haystack_image = self.image_container.get_haystack_image(format=ImageFormat.IMAGETK)
-        self.view.canvas_desktop_img.itemconfig(self.view.desktop_img, image=self.haystack_image)
+            self.haystack_image = self.image_container.get_haystack_image(
+                format=ImageFormat.IMAGETK
+            )
+            self.view.canvas_desktop_img.itemconfig(
+                self.view.desktop_img, image=self.haystack_image
+            )
 
-        num_of_matches_found = len(self.coord)
-        self.view.matches_found.set(num_of_matches_found)
-        font_color = self.model.change_color_of_label(num_of_matches_found)
-        self.view.label_matches_found.config(fg=font_color)
+            num_of_matches_found = len(self.coord)
+            self.view.matches_found.set(num_of_matches_found)
+            font_color = self.model.change_color_of_label(num_of_matches_found)
+            self.view.label_matches_found.config(fg=font_color)
 
-        self.strategy_snippet = f"Set Strategy  default  confidence={self.image_horizon_instance.confidence}"
-        self.view.set_strategy_snippet.set(self.strategy_snippet)
-        self.view.btn_copy_strategy_snippet["state"] = "normal"
-        self.view.processing_done = True
+            self.strategy_snippet = (
+                f"Set Strategy  default  confidence={self.image_horizon_instance.confidence}"
+            )
+            self.view.set_strategy_snippet.set(self.strategy_snippet)
+            self.view.btn_copy_strategy_snippet["state"] = "normal"
+            self.view.processing_done = True
+        except Exception as exc:
+            LOGGER.error(exc)
+            self.view.label_statusBar.config(fg='RED')
+            self.view.hint_msg.set(str(exc))
+            self.view.processing_done = False
 
     def on_click_run_edge_detec_strategy(self):
         """Execute recognition using the edge detection strategy."""
-        self.image_horizon_instance.set_strategy('edge')
-        self.image_horizon_instance.edge_low_threshold = float(self.view.scale_low_thres_edge.get())
-        self.image_horizon_instance.edge_high_threshold = float(self.view.scale_high_thres_edge.get())
-        if self.image_horizon_instance.edge_high_threshold < self.image_horizon_instance.edge_low_threshold:
-            self.reset_results()
-            self.reset_images()
-            self.view._threshold_error()
-            self.view.processing_done=False
-            return
-        
-        self.image_horizon_instance.confidence = float(self.view.scale_conf_lvl_edge.get())
-        self.image_horizon_instance.edge_sigma = float(self.view.scale_sigma_edge.get())
-        self.image_container._haystack_image_orig_size = self._take_screenshot()
+        try:
+            self.image_horizon_instance.set_strategy('edge')
+            self.image_horizon_instance.edge_low_threshold = float(
+                self.view.scale_low_thres_edge.get()
+            )
+            self.image_horizon_instance.edge_high_threshold = float(
+                self.view.scale_high_thres_edge.get()
+            )
+            if (
+                self.image_horizon_instance.edge_high_threshold
+                < self.image_horizon_instance.edge_low_threshold
+            ):
+                self.reset_results()
+                self.reset_images()
+                self.view._threshold_error()
+                self.view.processing_done = False
+                return
 
-        
-        matcher = Cv2(self.image_container, self.image_horizon_instance)
-        self.coord = matcher.find_num_of_matches()
-        matcher.highlight_matches()
+            self.image_horizon_instance.confidence = float(
+                self.view.scale_conf_lvl_edge.get()
+            )
+            self.image_horizon_instance.edge_sigma = float(
+                self.view.scale_sigma_edge.get()
+            )
+            self.image_container._haystack_image_orig_size = self._take_screenshot()
 
-        self.haystack_image = self.image_container.get_haystack_image(format=ImageFormat.IMAGETK)
-        self.view.canvas_desktop_img.itemconfig(self.view.desktop_img, image=self.haystack_image)
+            matcher = Cv2(self.image_container, self.image_horizon_instance)
+            self.coord = matcher.find_num_of_matches()
+            matcher.highlight_matches()
 
-        num_of_matches_found = len(self.coord)
-        max_peak = round(np.amax(self.image_horizon_instance.peakmap), 2)
-        if max_peak < 0.75:
-            result_msg = f"{num_of_matches_found} / max peak value below 0.75"
-        else:
-            result_msg = f"{num_of_matches_found} / {max_peak}"
-            
-        self.view.matches_found.set(result_msg)
-        font_color = self.model.change_color_of_label(num_of_matches_found)
-        self.view.label_matches_found.config(fg=font_color)
-        self.view.btn_edge_detec_debugger["state"] = "normal"
+            self.haystack_image = self.image_container.get_haystack_image(
+                format=ImageFormat.IMAGETK
+            )
+            self.view.canvas_desktop_img.itemconfig(
+                self.view.desktop_img, image=self.haystack_image
+            )
 
-        self.strategy_snippet = (
-            f"Set Strategy  edge  edge_sigma={self.image_horizon_instance.edge_sigma}  "
-            f"edge_low_threshold={self.image_horizon_instance.edge_low_threshold}  "
-            f"edge_high_threshold={self.image_horizon_instance.edge_high_threshold}  "
-            f"edge_preprocess={self.image_horizon_instance.edge_preprocess}  "
-            f"edge_kernel_size={self.image_horizon_instance.edge_kernel_size}  "
-            f"validate_match={self.image_horizon_instance.validate_match}  "
-            f"validation_margin={self.image_horizon_instance.validation_margin}  "
-            f"confidence={self.image_horizon_instance.confidence}"
-        )
-        self.view.set_strategy_snippet.set(self.strategy_snippet)
-        self.view.btn_copy_strategy_snippet["state"] = "normal"
-        self.view.processing_done = True
+            num_of_matches_found = len(self.coord)
+            max_peak = round(np.amax(self.image_horizon_instance.peakmap), 2)
+            if max_peak < 0.75:
+                result_msg = f"{num_of_matches_found} / max peak value below 0.75"
+            else:
+                result_msg = f"{num_of_matches_found} / {max_peak}"
+
+            self.view.matches_found.set(result_msg)
+            font_color = self.model.change_color_of_label(num_of_matches_found)
+            self.view.label_matches_found.config(fg=font_color)
+            self.view.btn_edge_detec_debugger["state"] = "normal"
+
+            self.strategy_snippet = (
+                f"Set Strategy  edge  edge_sigma={self.image_horizon_instance.edge_sigma}  "
+                f"edge_low_threshold={self.image_horizon_instance.edge_low_threshold}  "
+                f"edge_high_threshold={self.image_horizon_instance.edge_high_threshold}  "
+                f"edge_preprocess={self.image_horizon_instance.edge_preprocess}  "
+                f"edge_kernel_size={self.image_horizon_instance.edge_kernel_size}  "
+                f"validate_match={self.image_horizon_instance.validate_match}  "
+                f"validation_margin={self.image_horizon_instance.validation_margin}  "
+                f"confidence={self.image_horizon_instance.confidence}"
+            )
+            self.view.set_strategy_snippet.set(self.strategy_snippet)
+            self.view.btn_copy_strategy_snippet["state"] = "normal"
+            self.view.processing_done = True
+        except Exception as exc:
+            LOGGER.error(exc)
+            self.view.label_statusBar.config(fg='RED')
+            self.view.hint_msg.set(str(exc))
+            self.view.processing_done = False
 
     def on_click_plot_results_edge(self):
         """Display detailed edge detection results in a matplotlib window."""
