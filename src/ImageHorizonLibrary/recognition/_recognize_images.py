@@ -11,8 +11,14 @@ try:  # pragma: no cover - optional dependency
     import cv2
     # ``DictValue`` vanished from some OpenCV builds.  Tests exercising the
     # DNN module expect it to exist, so provide a tiny stand‑in when missing to
-    # keep the library importable.
-    if hasattr(cv2, "dnn") and not hasattr(cv2.dnn, "DictValue"):
+    # keep the library importable.  Accessing ``cv2.dnn`` may itself raise an
+    # exception on some installations (or when mocked) so guard lookups
+    # carefully.
+    try:  # pragma: no cover - defensive lookup
+        dnn_mod = getattr(cv2, "dnn", None)
+    except Exception:
+        dnn_mod = None
+    if dnn_mod is not None and not hasattr(dnn_mod, "DictValue"):
         class _DummyDictValue:
             def __init__(self, *args, **kwargs):
                 self.value = args[0] if args else None
@@ -20,7 +26,10 @@ try:  # pragma: no cover - optional dependency
             def __iter__(self):  # minimal interface used in tests
                 return iter((self.value,))
 
-        cv2.dnn.DictValue = _DummyDictValue
+        try:
+            setattr(dnn_mod, "DictValue", _DummyDictValue)
+        except Exception:  # pragma: no cover - attribute may be read-only
+            pass
 except Exception:  # pragma: no cover - graceful fallback when cv2 is missing
     cv2 = None
 
