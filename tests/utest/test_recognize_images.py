@@ -362,6 +362,29 @@ class TestEdgeDetection(TestCase):
 
         self.assertFalse(np.array_equal(edges_low_high, edges_high_high))
 
+    def test_set_strategy_accepts_string_edge_parameters(self):
+        from unittest.mock import MagicMock, patch
+        import numpy as np
+
+        with patch.dict("sys.modules", {"pyautogui": MagicMock(), "cv2": MagicMock()}):
+            from ImageHorizonLibrary import ImageHorizonLibrary
+            from ImageHorizonLibrary.recognition._recognize_images import _StrategyCv2
+
+            ih = ImageHorizonLibrary(reference_folder=TESTIMG_DIR)
+
+        dummy_img = np.zeros((5, 5), dtype=np.uint8)
+        with patch.object(_StrategyCv2, "_detect_edges", return_value=dummy_img):
+            ih.set_strategy(
+                "edge",
+                edge_sigma="2.0",
+                edge_low_threshold="0.1",
+                edge_high_threshold="0.3",
+            )
+            ih.strategy_instance.detect_edges(dummy_img)
+            self.assertIsInstance(ih.edge_sigma, float)
+            self.assertIsInstance(ih.edge_low_threshold, float)
+            self.assertIsInstance(ih.edge_high_threshold, float)
+
 
 class TestMultiScaleSearch(TestCase):
     def test_finds_scaled_reference(self):
