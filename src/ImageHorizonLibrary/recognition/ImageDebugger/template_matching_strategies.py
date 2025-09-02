@@ -33,10 +33,14 @@ class Pyautogui(TemplateMatchingStrategy):
 
     def find_num_of_matches(self):
         """Return coordinates of all matches using PyAutoGUI."""
-        self.coord = list(self.image_horizon_instance._locate_all(
-            self.image_container.get_needle_image(ImageFormat.PATHSTR),
-            self.image_container.get_haystack_image_orig_size(ImageFormat.PILIMG)
-        ))
+        matches = list(
+            self.image_horizon_instance._locate_all(
+                self.image_container.get_needle_image(ImageFormat.PATHSTR),
+                self.image_container.get_haystack_image_orig_size(ImageFormat.PILIMG),
+            )
+        )
+        # Each match is ``(location, score, scale)``; keep only location.
+        self.coord = [loc for loc, _, _ in matches]
         return self.coord
 
 
@@ -50,8 +54,12 @@ class Cv2(TemplateMatchingStrategy):
 
     def find_num_of_matches(self):
         """Return coordinates of all matches using OpenCV."""
-        self.coord = list(self.image_horizon_instance._locate_all(
-            self.image_container.get_needle_image(ImageFormat.PATHSTR),
-            self.image_container.get_haystack_image_orig_size(ImageFormat.NUMPYARRAY)
-        ))
+        matches = list(
+            self.image_horizon_instance._locate_all(
+                self.image_container.get_needle_image(ImageFormat.PATHSTR),
+                self.image_container.get_haystack_image_orig_size(ImageFormat.NUMPYARRAY),
+            )
+        )
+        # Keep only location information for highlighting/plotting.
+        self.coord = [loc for loc, _, _ in matches]
         return self.coord
