@@ -58,7 +58,14 @@ class TestLocateKeywordStrategies(TestCase):
         from unittest.mock import MagicMock, patch
         import numpy as np
 
-        with patch.dict('sys.modules', {'pyautogui': MagicMock()}):
+        fake_cv2 = MagicMock()
+        fake_cv2.threshold.return_value = (127, None)
+        fake_cv2.THRESH_BINARY = 0
+        fake_cv2.THRESH_OTSU = 0
+
+        with patch.dict(
+            "sys.modules", {"pyautogui": MagicMock(), "cv2": fake_cv2}
+        ):
             from ImageHorizonLibrary.recognition._recognize_images import _StrategyCv2
 
             class DummyIH:
