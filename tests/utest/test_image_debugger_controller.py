@@ -123,10 +123,10 @@ class TestTakeScreenshot(TestCase):
         view = FakeView()
         ctrl = self._get_controller(view=view, model=model)
         ctrl._minimize = False
-        with patch('ImageHorizonLibrary.recognition.ImageDebugger.image_debugger_controller.ImageDraw') as mock_draw:
-            mock_draw.Draw.return_value = MagicMock()
+        with patch('PIL.ImageDraw.Draw') as mock_draw:
+            mock_draw.return_value = MagicMock()
             result = ctrl._take_screenshot()
         self.assertEqual(result, 'img')
         self.assertEqual(view.state_calls, [])
-        mock_draw.Draw.assert_called_once_with('img')
-        mock_draw.Draw.return_value.rectangle.assert_called_once()
+        mock_draw.assert_called_once_with('img')
+        mock_draw.return_value.rectangle.assert_called_once()
