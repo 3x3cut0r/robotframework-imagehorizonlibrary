@@ -379,11 +379,16 @@ class TestEdgeDetection(TestCase):
                 edge_sigma="2.0",
                 edge_low_threshold="0.1",
                 edge_high_threshold="0.3",
+                edge_preprocess="gaussian",
+                edge_kernel_size="5",
             )
             ih.strategy_instance.detect_edges(dummy_img)
             self.assertIsInstance(ih.edge_sigma, float)
             self.assertIsInstance(ih.edge_low_threshold, float)
             self.assertIsInstance(ih.edge_high_threshold, float)
+            self.assertEqual(ih.edge_preprocess, "gaussian")
+            self.assertIsInstance(ih.edge_kernel_size, int)
+            self.assertEqual(ih.edge_kernel_size, 5)
 
 
 class TestMultiScaleSearch(TestCase):
@@ -466,6 +471,88 @@ class TestPreprocessingAndValidation(TestCase):
                 img, ih.edge_sigma, ih.edge_low_threshold, ih.edge_high_threshold
             )
             fake_cv2.GaussianBlur.assert_called_once_with(ANY, (3, 3), 0)
+
+    def test_median_preprocess_calls_cv2(self):
+        fake_cv2 = MagicMock()
+        fake_cv2.medianBlur.return_value = np.zeros((5, 5), dtype=np.uint8)
+        fake_cv2.Canny.return_value = np.zeros((5, 5), dtype=np.uint8)
+
+        with patch.dict("sys.modules", {"pyautogui": MagicMock()}):
+            from ImageHorizonLibrary.recognition import _recognize_images
+            from ImageHorizonLibrary.recognition._recognize_images import _StrategyCv2
+
+        with patch.object(_recognize_images, "cv2", fake_cv2):
+            class DummyIH:
+                edge_sigma = 0
+                edge_low_threshold = 0.1
+                edge_high_threshold = 0.2
+                edge_preprocess = "median"
+                edge_kernel_size = "5"
+                has_cv = True
+
+            ih = DummyIH()
+            strategy = _StrategyCv2(ih)
+            img = np.zeros((5, 5), dtype=np.uint8)
+            strategy._detect_edges(
+                img, ih.edge_sigma, ih.edge_low_threshold, ih.edge_high_threshold
+            )
+            fake_cv2.medianBlur.assert_called_once_with(ANY, 5)
+
+    def test_erode_preprocess_calls_cv2(self):
+        fake_cv2 = MagicMock()
+        fake_cv2.erode.return_value = np.zeros((5, 5), dtype=np.uint8)
+        fake_cv2.Canny.return_value = np.zeros((5, 5), dtype=np.uint8)
+
+        with patch.dict("sys.modules", {"pyautogui": MagicMock()}):
+            from ImageHorizonLibrary.recognition import _recognize_images
+            from ImageHorizonLibrary.recognition._recognize_images import _StrategyCv2
+
+        with patch.object(_recognize_images, "cv2", fake_cv2):
+            class DummyIH:
+                edge_sigma = 0
+                edge_low_threshold = 0.1
+                edge_high_threshold = 0.2
+                edge_preprocess = "erode"
+                edge_kernel_size = "5"
+                has_cv = True
+
+            ih = DummyIH()
+            strategy = _StrategyCv2(ih)
+            img = np.zeros((5, 5), dtype=np.uint8)
+            strategy._detect_edges(
+                img, ih.edge_sigma, ih.edge_low_threshold, ih.edge_high_threshold
+            )
+            fake_cv2.erode.assert_called_once()
+            args, _ = fake_cv2.erode.call_args
+            self.assertEqual(args[1].shape, (5, 5))
+
+    def test_dilate_preprocess_calls_cv2(self):
+        fake_cv2 = MagicMock()
+        fake_cv2.dilate.return_value = np.zeros((5, 5), dtype=np.uint8)
+        fake_cv2.Canny.return_value = np.zeros((5, 5), dtype=np.uint8)
+
+        with patch.dict("sys.modules", {"pyautogui": MagicMock()}):
+            from ImageHorizonLibrary.recognition import _recognize_images
+            from ImageHorizonLibrary.recognition._recognize_images import _StrategyCv2
+
+        with patch.object(_recognize_images, "cv2", fake_cv2):
+            class DummyIH:
+                edge_sigma = 0
+                edge_low_threshold = 0.1
+                edge_high_threshold = 0.2
+                edge_preprocess = "dilate"
+                edge_kernel_size = "5"
+                has_cv = True
+
+            ih = DummyIH()
+            strategy = _StrategyCv2(ih)
+            img = np.zeros((5, 5), dtype=np.uint8)
+            strategy._detect_edges(
+                img, ih.edge_sigma, ih.edge_low_threshold, ih.edge_high_threshold
+            )
+            fake_cv2.dilate.assert_called_once()
+            args, _ = fake_cv2.dilate.call_args
+            self.assertEqual(args[1].shape, (5, 5))
 
     def test_match_validation_uses_opencv(self):
         from unittest.mock import MagicMock, patch
