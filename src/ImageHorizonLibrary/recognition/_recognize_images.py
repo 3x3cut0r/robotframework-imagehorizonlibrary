@@ -378,6 +378,7 @@ class _RecognizeImages(object):
         location = None
         score = None
         scale = 1.0
+        best_score = None
         for ref_image in reference_images:
             try:
                 result = self._try_locate(ref_image)
@@ -403,15 +404,34 @@ class _RecognizeImages(object):
                     scl = float(np.asarray(scl).flat[0])
                 location, score, scale = loc, scr, scl
                 break
+            else:
+                if scr is not None and (
+                    best_score is None or scr > best_score
+                ):
+                    best_score = scr
 
         if location is None:
+            confidence = getattr(self, "confidence", None)
+            matches = 0
             if log_it:
                 LOGGER.info(
-                    'Image "%s" was not found '
-                    "on screen. (strategy: %s)" % (reference_image, self.strategy)
+                    'Image "%s" was not found on screen. '
+                    "(strategy: %s, matches: %d, best score %.3f, confidence %.3f)"
+                    % (
+                        reference_image,
+                        self.strategy,
+                        matches,
+                        best_score if best_score is not None else float('nan'),
+                        confidence if confidence is not None else float('nan'),
+                    )
                 )
             self._run_on_failure()
-            raise ImageNotFoundException(reference_image)
+            raise ImageNotFoundException(
+                reference_image,
+                matches=matches,
+                best_score=best_score,
+                confidence=confidence,
+            )
 
         center_point = ag.center(location)
         x = center_point.x
@@ -560,17 +580,21 @@ class _RecognizeImages(object):
         """
         stop_time = time() + float(timeout)
         location = None
+        last_exc = None
         with self._suppress_keyword_on_failure():
             while True:
                 try:
                     location = self._locate(reference_image, log_it=True)
                     break
-                except ImageNotFoundException:
+                except ImageNotFoundException as e:
+                    last_exc = e
                     if time() > stop_time:
                         break
                     sleep(0.1)
         if location is None:
             self._run_on_failure()
+            if last_exc is not None:
+                raise last_exc
             raise ImageNotFoundException(self._normalize(reference_image))
         x, y, score, scale = location
         LOGGER.info(
