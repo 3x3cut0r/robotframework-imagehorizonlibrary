@@ -20,6 +20,7 @@ class TestRecognizeImages(TestCase):
         self.locate = 'ImageHorizonLibrary.ImageHorizonLibrary.locate'
         self._locate = 'ImageHorizonLibrary.ImageHorizonLibrary._locate'
         self._try_locate = 'ImageHorizonLibrary.ImageHorizonLibrary._try_locate'
+        self._locate_all = 'ImageHorizonLibrary.ImageHorizonLibrary._locate_all'
 
     def tearDown(self):
         self.mock.reset_mock()
@@ -124,6 +125,14 @@ class TestRecognizeImages(TestCase):
                 with self.assertRaises(ValueError):
                     self.lib._locate('my_picture')
                 log.error.assert_called()
+
+    def test_locate_all(self):
+        locations = [((0, 0, 10, 10), 0.8, 1.0), ((10, 10, 10, 10), 0.9, 1.0)]
+        self.lib.pixel_ratio = 1.0
+        self.mock.center.side_effect = [MagicMock(x=5, y=5), MagicMock(x=15, y=15)]
+        with patch(self._locate_all, return_value=locations):
+            result = self.lib.locate_all('my_picture')
+        self.assertEqual(result, [(5, 5, 0.8, 1.0), (15, 15, 0.9, 1.0)])
 
     def test_try_locate_all_handles_numpy_array(self):
         from ImageHorizonLibrary.recognition._recognize_images import (

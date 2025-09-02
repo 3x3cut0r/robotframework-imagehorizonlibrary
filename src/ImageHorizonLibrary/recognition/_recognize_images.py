@@ -507,6 +507,37 @@ class _RecognizeImages(object):
         """
         return self._locate(reference_image)
 
+    def locate_all(self, reference_image):
+        """Locate all occurrences of an image on screen.
+
+        Parameters
+        ----------
+        reference_image : str
+            Name or path of the image to locate.
+
+        Returns
+        -------
+        list[tuple]
+            List of tuples ``(x, y, score, scale)`` describing each match.
+
+        Raises
+        ------
+        InvalidImageException
+            If ``reference_image`` resolves to multiple files.
+        """
+        matches = []
+        locations = self._locate_all(reference_image)
+        if self.pixel_ratio == 0.0:
+            self.__get_pixel_ratio()
+        for loc, score, scale in locations:
+            center = ag.center(loc)
+            x, y = center.x, center.y
+            if self.pixel_ratio > 1:
+                x = x / self.pixel_ratio
+                y = y / self.pixel_ratio
+            matches.append((x, y, score, scale))
+        return matches
+
     def wait_for(self, reference_image, timeout=10):
         """Wait until an image appears on the screen.
 

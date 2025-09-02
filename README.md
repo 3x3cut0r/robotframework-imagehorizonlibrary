@@ -29,7 +29,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 - Added `edge` recognition strategy using OpenCV (`cv2`) for robust matching on screens with pixel deviations.
 - Additional edge preprocessing filters (`gaussian`, `median`, `erode`, `dilate`) for the `edge` recognition strategy.
 - Optional multi-scale search that can be enabled with `Set Scale Range`.
-- Keywords such as `Wait For` and `Locate` now have a working timout function and return the correlation score (`score`) and detected scaling factor (`scale`).
+- Keywords such as `Wait For`, `Locate`, and `Locate All` now have a working timout function and return the correlation score (`score`) and detected scaling factor (`scale`).
 - Installation metadata managed via `pyproject.toml`, updated dependencies and removed depricated `setup.py|cfg` files.
 - Removed unused dependencies and replaced `scikit-image` with headless OpenCV (`opencv-python-headless`).
 - Various documentation improvements and safe version handling.
@@ -76,7 +76,7 @@ Additional usage examples for the `edge` strategy:
 | Set Strategy | edge | edge_preprocess=median | edge_kernel_size=7 |
 ```
 
-Keywords such as `Wait For` and `Locate` return not only the match coordinates
+Keywords such as `Wait For`, `Locate`, and `Locate All` return not only the match coordinates
 but also the correlation score and an optional detected scaling factor
 describing the match quality. The typical return signature is:
 
@@ -126,6 +126,7 @@ Generated keyword documentation is available in
 | Get Clipboard Content | Return the current text from the system clipboard. |
 | Launch Application | Launch an external application as a new process. |
 | Locate | Locate image on screen. |
+| Locate All | Locate all occurrences of an image on screen. |
 | Mouse Down | Press and hold a mouse button. |
 | Mouse Up | Release a previously pressed mouse button. |
 | Move To | Move the mouse pointer to absolute screen coordinates. |
