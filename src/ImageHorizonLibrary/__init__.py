@@ -232,12 +232,20 @@ class ImageHorizonLibrary(
         - ``edge`` - Advanced image recognition options with canny edge detection
 
         The ``edge`` strategy allows these additional parameters:
-          - ``edge_sigma`` - Gaussian blur intensity (auto if ``None``)
-          - ``edge_low_threshold`` - low pixel gradient threshold (auto if ``None``)
-          - ``edge_high_threshold`` - high pixel gradient threshold (auto if ``None``)
-          - ``edge_preprocess`` - optional pre-processing filter; allowed filters:
-            ``gaussian``, ``median``, ``erode``, ``dilate`` (requires OpenCV ``cv2``)
-          - ``edge_kernel_size`` - kernel size for the pre-processing filter
+          - ``edge_sigma`` – standard deviation of the Gaussian blur applied
+            before edge extraction; larger values smooth more noise (auto if
+            ``None``).
+          - ``edge_low_threshold`` – lower gradient magnitude threshold
+            (0.0–1.0); gradients below this value are discarded (auto if
+            ``None``).
+          - ``edge_high_threshold`` – upper gradient magnitude threshold
+            (0.0–1.0) used to mark strong edges; values between the thresholds
+            are kept only if connected to a strong edge (auto if ``None``).
+          - ``edge_preprocess`` – optional pre-processing filter; allowed
+            filters ``gaussian`` (extra blur), ``median`` (noise reduction),
+            ``erode`` (shrink bright regions), ``dilate`` (expand bright
+            regions). Requires OpenCV ``cv2``.
+          - ``edge_kernel_size`` – kernel size for the pre-processing filter
           - ``validate_match`` - re-check match on original image with OpenCV
           - ``validation_margin`` - margin in pixels around match for validation
         """

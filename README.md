@@ -10,6 +10,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 - [Notable differences to the original project](#notable-differences-to-the-original-project)
 - [Introduction](#introduction)
 - [Edge preprocessing](#edge-preprocessing)
+- [Edge detection parameters](#edge-detection-parameters)
 - [Keyword documentation](#keyword-documentation)
 - [Robot keywords](#robot-keywords)
 - [Prerequisites](#prerequisites)
@@ -58,11 +59,33 @@ and is enabled with the `edge_preprocess` argument. Supported filters are
 `gaussian`, `median`, `erode` and `dilate`. The size of the filter kernel
 can be adjusted with `edge_kernel_size` (default is 3).
 
+The filters have the following effects:
+
+- `gaussian` – applies an additional Gaussian blur to reduce noise.
+- `median` – replaces each pixel with the median of the neighbourhood to
+  remove salt-and-pepper noise while preserving edges.
+- `erode` – shrinks bright regions which can help remove small artifacts.
+- `dilate` – expands bright regions to close small gaps.
+
 Example:
 
 ```
 | Set Strategy | edge | edge_preprocess=gaussian | edge_kernel_size=5 |
 ```
+
+## Edge detection parameters
+
+The `edge` strategy exposes three parameters that control the Canny edge
+detector:
+
+- `edge_sigma` – width of the Gaussian blur applied before edge
+  extraction. Larger values smooth the image more aggressively which can
+  reduce noise but may remove fine details.
+- `edge_low_threshold` – lower gradient magnitude threshold (0.0–1.0).
+  Edges with a value below this threshold are discarded.
+- `edge_high_threshold` – upper gradient magnitude threshold (0.0–1.0).
+  Values above this are considered strong edges. Edges between the two
+  thresholds are kept only if connected to a strong edge.
 
 Additional usage examples for the `edge` strategy:
 

@@ -1010,11 +1010,12 @@ class _StrategyCv2:
         img : array-like
             Grayscale image data.
         sigma : float
-            Gaussian blur intensity for the Canny detector.
+            Standard deviation of the Gaussian blur applied before edge
+            detection.
         low : float
-            Low threshold for pixel gradients.
+            Lower gradient magnitude threshold (0.0–1.0).
         high : float
-            High threshold for pixel gradients.
+            Upper gradient magnitude threshold (0.0–1.0).
 
         Returns
         -------
