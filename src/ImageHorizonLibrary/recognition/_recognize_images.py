@@ -624,7 +624,7 @@ class _RecognizeImages(object):
         )
         return location
 
-    def debug_image(self):
+    def debug_image(self, reference_folder=None):
         """Halts the test execution and opens the image debugger UI.
 
         Whenever you encounter problems with the recognition accuracy of a reference image,
@@ -646,11 +646,21 @@ class _RecognizeImages(object):
         | Set Strategy  edge  edge_sigma=2.0  edge_low_threshold=0.1  edge_high_threshold=0.3
         | Wait For  hard_to_find_button
 
+        ``reference_folder`` can be given to temporarily override the folder
+        from which reference images are loaded.
+
         The purpose of this keyword is *solely for debugging purposes*; don't
         use it in production!"""
         from .ImageDebugger import ImageDebugger
 
-        debug_app = ImageDebugger(self)
+        previous_reference_folder = self.reference_folder
+        if reference_folder is not None:
+            self.set_reference_folder(reference_folder)
+        try:
+            debug_app = ImageDebugger(self)
+        finally:
+            if reference_folder is not None:
+                self.set_reference_folder(previous_reference_folder)
 
 
 class _StrategyPyautogui:
