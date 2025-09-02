@@ -784,7 +784,7 @@ class _StrategyPyautogui:
 class _StrategyCv2:
     """Image matching strategy using OpenCV edge detection."""
 
-    _CV_DEFAULT_CONFIDENCE = 0.99
+    _CV_DEFAULT_CONFIDENCE = 0.8
 
     def __init__(self, image_horizon_instance):
         """Store reference to the owning ImageHorizonLibrary instance."""
