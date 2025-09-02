@@ -994,6 +994,12 @@ class _StrategyCv2:
         sigma = self.ih_instance.edge_sigma
         low = self.ih_instance.edge_low_threshold
         high = self.ih_instance.edge_high_threshold
+        try:
+            sigma = float(sigma) if sigma is not None else None
+            low = float(low) if low is not None else None
+            high = float(high) if high is not None else None
+        except (TypeError, ValueError):
+            sigma = low = high = None
 
         if sigma is None or low is None or high is None:
             auto_sigma, auto_low, auto_high = self._auto_edge_parameters(img)

@@ -257,13 +257,32 @@ class ImageHorizonLibrary(
         self.initial_confidence = confidence
         self._class_bases = inspect.getmro(self.__class__)
         self.set_strategy(strategy, self.confidence)
-        self.edge_sigma = edge_sigma
-        self.edge_low_threshold = edge_low_threshold
-        self.edge_high_threshold = edge_high_threshold
+        try:
+            self.edge_sigma = float(edge_sigma) if edge_sigma is not None else None
+        except (TypeError, ValueError):
+            self.edge_sigma = None
+        try:
+            self.edge_low_threshold = (
+                float(edge_low_threshold) if edge_low_threshold is not None else None
+            )
+        except (TypeError, ValueError):
+            self.edge_low_threshold = None
+        try:
+            self.edge_high_threshold = (
+                float(edge_high_threshold) if edge_high_threshold is not None else None
+            )
+        except (TypeError, ValueError):
+            self.edge_high_threshold = None
         self.edge_preprocess = edge_preprocess
-        self.edge_kernel_size = edge_kernel_size
+        try:
+            self.edge_kernel_size = int(edge_kernel_size)
+        except (TypeError, ValueError):
+            self.edge_kernel_size = 3
         self.validate_match = validate_match
-        self.validation_margin = validation_margin
+        try:
+            self.validation_margin = int(validation_margin)
+        except (TypeError, ValueError):
+            self.validation_margin = 5
 
         # multi-scale search configuration
         self.scale_enabled = False
@@ -305,13 +324,32 @@ class ImageHorizonLibrary(
             self.strategy_instance = _StrategyPyautogui(self)
         elif strategy == "edge":
             self.strategy_instance = _StrategyCv2(self)
-            self.edge_sigma = edge_sigma
-            self.edge_low_threshold = edge_low_threshold
-            self.edge_high_threshold = edge_high_threshold
+            try:
+                self.edge_sigma = float(edge_sigma) if edge_sigma is not None else None
+            except (TypeError, ValueError):
+                self.edge_sigma = None
+            try:
+                self.edge_low_threshold = (
+                    float(edge_low_threshold) if edge_low_threshold is not None else None
+                )
+            except (TypeError, ValueError):
+                self.edge_low_threshold = None
+            try:
+                self.edge_high_threshold = (
+                    float(edge_high_threshold) if edge_high_threshold is not None else None
+                )
+            except (TypeError, ValueError):
+                self.edge_high_threshold = None
             self.edge_preprocess = edge_preprocess
-            self.edge_kernel_size = edge_kernel_size
+            try:
+                self.edge_kernel_size = int(edge_kernel_size)
+            except (TypeError, ValueError):
+                self.edge_kernel_size = 3
             self.validate_match = validate_match
-            self.validation_margin = validation_margin
+            try:
+                self.validation_margin = int(validation_margin)
+            except (TypeError, ValueError):
+                self.validation_margin = 5
         else:
             raise StrategyException('Invalid strategy: "%s"' % strategy)
 
