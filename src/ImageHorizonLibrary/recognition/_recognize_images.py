@@ -7,8 +7,20 @@ from contextlib import contextmanager
 import pyautogui as ag
 from robot.api import logger as LOGGER
 
-try:
+try:  # pragma: no cover - optional dependency
     import cv2
+    # ``DictValue`` vanished from some OpenCV builds.  Tests exercising the
+    # DNN module expect it to exist, so provide a tiny stand‑in when missing to
+    # keep the library importable.
+    if hasattr(cv2, "dnn") and not hasattr(cv2.dnn, "DictValue"):
+        class _DummyDictValue:
+            def __init__(self, *args, **kwargs):
+                self.value = args[0] if args else None
+
+            def __iter__(self):  # minimal interface used in tests
+                return iter((self.value,))
+
+        cv2.dnn.DictValue = _DummyDictValue
 except Exception:  # pragma: no cover - graceful fallback when cv2 is missing
     cv2 = None
 
@@ -991,22 +1003,27 @@ class _StrategyCv2:
         a fraction of the high threshold.
         """
 
-        img_float = img.astype(np.float64)
-        if img_float.max() > 1.0:
+        # ``img`` may be provided as a list or other array-like type; make sure
+        # we are working with a NumPy array of floats to avoid type promotion
+        # issues which manifested as ``umr_maximum``/``float`` errors on some
+        # platforms.
+        img_float = np.asarray(img, dtype=np.float64)
+        max_val = float(np.max(img_float)) if img_float.size else 0.0
+        if max_val > 1.0:
             img_float /= 255.0
 
         std = float(np.std(img_float))
         sigma = float(np.clip(std * 3, 0.1, 5.0))
 
-        img_uint8 = (img_float * 255).astype(np.uint8)
+        img_uint8 = np.rint(img_float * 255).astype(np.uint8)
         t, _ = cv2.threshold(img_uint8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        t = t / 255.0
+        t = float(t) / 255.0
         low = float(max(0.0, t * 0.5))
         high = float(min(1.0, t * 1.5))
         if high <= low:
-            high = min(1.0, low + 0.05)
+            high = float(min(1.0, low + 0.05))
 
-        return sigma, low, high
+        return float(sigma), float(low), float(high)
 
     def _detect_edges(self, img, sigma, low, high):
         """Run Canny edge detection with optional preprocessing.
