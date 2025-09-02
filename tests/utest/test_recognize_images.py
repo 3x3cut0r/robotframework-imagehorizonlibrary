@@ -50,6 +50,16 @@ class TestRecognizeImages(TestCase):
             self.lib.click_image('my_picture')
             self.mock.click.assert_called_once_with((0, 0))
 
+    def test_click_image_logs_details_on_failure(self):
+        from ImageHorizonLibrary import ImageNotFoundException
+
+        exc = ImageNotFoundException('missing', best_score=0.5, confidence=0.8)
+        with patch.object(self.lib, 'wait_for', side_effect=exc), \
+             patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+            with self.assertRaises(ImageNotFoundException):
+                self.lib.click_image('missing')
+            log.info.assert_any_call(exc)
+
     def _call_all_directional_functions(self, fn_name):
         from ImageHorizonLibrary import ImageHorizonLibrary
         retvals = []
@@ -70,6 +80,16 @@ class TestRecognizeImages(TestCase):
     def test_directional_clicks(self):
         self._call_all_directional_functions('click_to_the_%s_of_image')
         self._verify_calls_to_pyautogui(self.mock.click.mock_calls)
+
+    def test_directional_click_logs_details_on_failure(self):
+        from ImageHorizonLibrary import ImageNotFoundException
+
+        exc = ImageNotFoundException('missing', best_score=0.5, confidence=0.8)
+        with patch.object(self.lib, 'wait_for', side_effect=exc), \
+             patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+            with self.assertRaises(ImageNotFoundException):
+                self.lib.click_to_the_above_of_image('missing', 10)
+            log.info.assert_any_call(exc)
 
     def test_directional_copies(self):
         copy = 'ImageHorizonLibrary.ImageHorizonLibrary.copy'
@@ -198,6 +218,16 @@ class TestRecognizeImages(TestCase):
              patch.object(self.lib, '_run_on_failure', run_on_failure):
             self.lib.locate('nonexistent')
             run_on_failure.assert_called_once_with()
+
+    def test_locate_logs_details_on_failure(self):
+        from ImageHorizonLibrary import ImageNotFoundException
+
+        exc = ImageNotFoundException('missing', best_score=0.5, confidence=0.8)
+        with patch(self._locate, side_effect=exc), \
+             patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+            with self.assertRaises(ImageNotFoundException):
+                self.lib.locate('missing')
+            log.info.assert_any_call(exc)
 
     def test_locate_with_valid_reference_folder(self):
         for ref, img in (('reference_images', 'my_picture.png'),
