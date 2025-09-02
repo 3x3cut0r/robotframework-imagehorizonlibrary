@@ -112,18 +112,20 @@ class UILocatorController:
         avoid leaving the window hidden in case of failures, a safety timer
         restores it after 10 seconds.
         """
-        self.view.wm_state('iconic')
-        restore_id = self.view.after(10000, lambda: self.view.wm_state('normal'))
         try:
-            screenshot = self.model.capture_desktop()
-        except Exception:
-            # The caller handles logging; the scheduled timer will restore the
-            # window so that the user can close it.
-            raise
-        else:
+            self.view.wm_state("iconic")
+        except Exception as exc:  # pragma: no cover - depends on tk implementation
+            raise RuntimeError(f"Failed to minimise debugger window: {exc}") from exc
+
+        restore_id = self.view.after(10000, lambda: self.view.wm_state("normal"))
+        try:
+            return self.model.capture_desktop()
+        finally:
             self.view.after_cancel(restore_id)
-            self.view.wm_state('normal')
-            return screenshot
+            try:
+                self.view.wm_state("normal")
+            except Exception as exc:  # pragma: no cover - depends on tk implementation
+                LOGGER.error(f"Restoring debugger window failed: {exc}")
     
     def on_click_run_default_strategy(self):
         """Execute recognition using the default strategy."""
