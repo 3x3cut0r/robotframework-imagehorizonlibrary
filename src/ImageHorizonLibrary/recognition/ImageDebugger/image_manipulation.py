@@ -2,7 +2,6 @@
 
 from PIL import Image, ImageTk
 from enum import Enum, unique
-import numpy as np
 
 try:
     RESAMPLE_FILTER = Image.Resampling.LANCZOS
@@ -42,6 +41,7 @@ class ImageContainer:
         if format == ImageFormat.PILIMG:
             return self._haystack_image
         elif format == ImageFormat.NUMPYARRAY:
+            import numpy as np
             return np.array(self._haystack_image)
         elif format == ImageFormat.IMAGETK:
             return ImageTk.PhotoImage(self._haystack_image)
@@ -51,6 +51,7 @@ class ImageContainer:
         if format == ImageFormat.PILIMG:
             return self._haystack_image_orig_size
         elif format == ImageFormat.NUMPYARRAY:
+            import numpy as np
             return np.array(self._haystack_image_orig_size)
         elif format == ImageFormat.IMAGETK:
             return ImageTk.PhotoImage(self._haystack_image_orig_size)
@@ -62,6 +63,7 @@ class ImageContainer:
         elif format == ImageFormat.PATHSTR:
             return self._needle_image['Path']
         elif format == ImageFormat.NUMPYARRAY:
+            import numpy as np
             return np.array(self._needle_image['Obj'])
         elif format == ImageFormat.IMAGETK:
             return ImageTk.PhotoImage(self._needle_image['Obj'])
