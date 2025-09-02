@@ -94,8 +94,17 @@ class _RecognizeImages(object):
         tuple
             A tuple ``(x, y, score, scale)`` with the coordinates of the match,
             optional matching score and detected scale factor.
+
+        Raises
+        ------
+        ImageNotFoundException
+            If ``reference_image`` cannot be located within ``timeout``.
         """
-        x, y, score, scale = self.wait_for(reference_image, timeout)
+        try:
+            x, y, score, scale = self.wait_for(reference_image, timeout)
+        except ImageNotFoundException as e:
+            LOGGER.info(e)
+            raise
         LOGGER.info(
             'Clicking image "%s" in position %s' % (reference_image, (x, y))
         )
@@ -126,7 +135,11 @@ class _RecognizeImages(object):
 
         Parameters are the same as in :py:meth:`click_to_the_above_of_image`.
         """
-        x, y, score, scale = self.wait_for(reference_image, timeout)
+        try:
+            x, y, score, scale = self.wait_for(reference_image, timeout)
+        except ImageNotFoundException as e:
+            LOGGER.info(e)
+            raise
         self._click_to_the_direction_of(
             direction, (x, y), offset, clicks, button, interval
         )
@@ -524,7 +537,11 @@ class _RecognizeImages(object):
         ImageNotFoundException
             If the image is not found on screen.
         """
-        return self._locate(reference_image)
+        try:
+            return self._locate(reference_image)
+        except ImageNotFoundException as e:
+            LOGGER.info(e)
+            raise
 
     def locate_all(self, reference_image):
         """Locate all occurrences of an image on screen.
