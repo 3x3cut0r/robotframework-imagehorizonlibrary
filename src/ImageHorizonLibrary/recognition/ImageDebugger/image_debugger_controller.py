@@ -112,6 +112,8 @@ class UILocatorController:
         avoid leaving the window hidden in case of failures, a safety timer
         restores it after 10 seconds.
         """
+        previous_state = self.view.state()
+
         try:
             self.view.iconify()
         except Exception as exc:  # pragma: no cover - depends on tk implementation
@@ -124,6 +126,7 @@ class UILocatorController:
             self.view.after_cancel(restore_id)
             try:
                 self.view.deiconify()
+                self.view.state(previous_state)
                 self.view.lift()
             except Exception as exc:  # pragma: no cover - depends on tk implementation
                 LOGGER.error(f"Restoring debugger window failed: {exc}")
