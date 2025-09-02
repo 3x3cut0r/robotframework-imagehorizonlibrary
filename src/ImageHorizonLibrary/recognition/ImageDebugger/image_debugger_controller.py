@@ -33,7 +33,7 @@ class UILocatorController:
         self.view.scale_sigma_edge.set(1.0)
         self.view.scale_low_thres_edge.set(0.1)
         self.view.scale_high_thres_edge.set(0.3)
-        self.view.scale_conf_lvl_edge.set(0.99)
+        self.view.scale_conf_lvl_edge.set(0.8)
         self.view.matches_found.set("None")
         self.view.btn_edge_detec_debugger["state"] = "disabled"
         self.view.btn_run_pyautogui["state"] = "disabled"
