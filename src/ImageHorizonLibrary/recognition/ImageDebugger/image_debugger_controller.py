@@ -15,7 +15,7 @@ from robot.api import logger as LOGGER
 class UILocatorController:
     """Connects debugger model and view components."""
 
-    def __init__(self, image_horizon_instance, minimize=True):
+    def __init__(self, image_horizon_instance, minimize=False):
         """Create controller and associated model/view objects."""
         self.image_container = ImageContainer()
         self.model = UILocatorModel()
