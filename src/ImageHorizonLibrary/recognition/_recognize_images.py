@@ -784,7 +784,6 @@ class _StrategyCv2:
         confidence = ih.confidence or self._CV_DEFAULT_CONFIDENCE
         with ih._suppress_keyword_on_failure():
             needle_img = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
-            needle_img_name = ref_image.split("\\")[-1].split(".")[0]
             if haystack_image is None:
                 haystack_img_gray = cv2.cvtColor(
                     np.array(ag.screenshot()), cv2.COLOR_RGB2GRAY
