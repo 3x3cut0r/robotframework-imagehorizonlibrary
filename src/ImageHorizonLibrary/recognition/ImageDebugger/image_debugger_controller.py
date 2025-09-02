@@ -15,11 +15,12 @@ from robot.api import logger as LOGGER
 class UILocatorController:
     """Connects debugger model and view components."""
 
-    def __init__(self, image_horizon_instance):
+    def __init__(self, image_horizon_instance, minimize=True):
         """Create controller and associated model/view objects."""
         self.image_container = ImageContainer()
         self.model = UILocatorModel()
         self.image_horizon_instance = image_horizon_instance
+        self._minimize = minimize
         self.view = UILocatorView(self, self.image_container, self.image_horizon_instance)
 
     def main(self):
@@ -108,28 +109,46 @@ class UILocatorController:
     def _take_screenshot(self):
         """Capture a screenshot of the current desktop.
 
-        The debugger window is minimised before taking the screenshot. To
-        avoid leaving the window hidden in case of failures, a safety timer
-        restores it after 10 seconds.
+        When ``self._minimize`` is ``True`` the debugger window is minimised
+        before taking the screenshot. To avoid leaving the window hidden in
+        case of failures, a safety timer restores it after 10 seconds. When
+        minimisation is disabled the screenshot is taken with the window
+        visible but its area is masked so that the debugger itself is ignored
+        by the matcher.
         """
-        previous_state = self.view.state()
+        if self._minimize:
+            previous_state = self.view.state()
 
-        try:
-            self.view.iconify()
-        except Exception as exc:  # pragma: no cover - depends on tk implementation
-            raise RuntimeError(f"Failed to minimise debugger window: {exc}") from exc
-
-        restore_id = self.view.after(10000, self.view.deiconify)
-        try:
-            return self.model.capture_desktop()
-        finally:
-            self.view.after_cancel(restore_id)
             try:
-                self.view.deiconify()
-                self.view.state(previous_state)
-                self.view.lift()
+                self.view.iconify()
             except Exception as exc:  # pragma: no cover - depends on tk implementation
-                LOGGER.error(f"Restoring debugger window failed: {exc}")
+                raise RuntimeError(f"Failed to minimise debugger window: {exc}") from exc
+
+            restore_id = self.view.after(10000, self.view.deiconify)
+            try:
+                return self.model.capture_desktop()
+            finally:
+                self.view.after_cancel(restore_id)
+                try:
+                    self.view.deiconify()
+                    self.view.state(previous_state)
+                    self.view.lift()
+                except Exception as exc:  # pragma: no cover - depends on tk implementation
+                    LOGGER.error(f"Restoring debugger window failed: {exc}")
+        else:
+            screenshot = self.model.capture_desktop()
+            try:  # pragma: no cover - depends on PIL implementation
+                from PIL import ImageDraw
+
+                x = self.view.winfo_rootx()
+                y = self.view.winfo_rooty()
+                w = self.view.winfo_width()
+                h = self.view.winfo_height()
+                drawer = ImageDraw.Draw(screenshot)
+                drawer.rectangle([x, y, x + w, y + h], fill=(0, 0, 0))
+            except Exception as exc:  # pragma: no cover - depends on system libs
+                LOGGER.error(f"Masking debugger window failed: {exc}")
+            return screenshot
     
     def on_click_run_default_strategy(self):
         """Execute recognition using the default strategy."""

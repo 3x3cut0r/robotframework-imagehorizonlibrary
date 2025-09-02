@@ -624,7 +624,7 @@ class _RecognizeImages(object):
         )
         return location
 
-    def debug_image(self, reference_folder=None):
+    def debug_image(self, reference_folder=None, minimize=True):
         """Halts the test execution and opens the image debugger UI.
 
         Whenever you encounter problems with the recognition accuracy of a reference image,
@@ -636,7 +636,7 @@ class _RecognizeImages(object):
         The test will halt at this position and open the debugger UI. Use it as follows:
 
         - Select the reference image (`hard_to_find_button`)
-        - Click the button "Detect reference image" for the strategy you want to test (default/edge). The GUI hides itself while it takes the screenshot of the current application.
+        - Click the button "Detect reference image" for the strategy you want to test (default/edge). The GUI hides itself while it takes the screenshot of the current application unless ``minimize`` is ``False``.
         - The Image Viewer at the botton shows the screenshot with all regions where the reference image was found.
         - "Matches Found": More than one match means that either `conficence` is set too low or that the reference image is visible multiple times. If the latter is the case, you should first detect a unique UI element and use relative keywords like `Click To The Right Of`.
         - "Max peak value" (only `edge`) gives feedback about the detection accuracy of the best match and is measured as a float number between 0 and 1. A peak value above _confidence_ results in a match.
@@ -649,6 +649,10 @@ class _RecognizeImages(object):
         ``reference_folder`` can be given to temporarily override the folder
         from which reference images are loaded.
 
+        ``minimize`` controls whether the debugger window is minimised before
+        taking a screenshot. Set it to ``False`` to keep the window visible; its
+        area will be masked so that matches inside the debugger are ignored.
+
         The purpose of this keyword is *solely for debugging purposes*; don't
         use it in production!"""
         from .ImageDebugger import ImageDebugger
@@ -657,7 +661,7 @@ class _RecognizeImages(object):
         if reference_folder is not None:
             self.set_reference_folder(reference_folder)
         try:
-            debug_app = ImageDebugger(self)
+            debug_app = ImageDebugger(self, minimize=minimize)
         finally:
             if reference_folder is not None:
                 self.set_reference_folder(previous_reference_folder)

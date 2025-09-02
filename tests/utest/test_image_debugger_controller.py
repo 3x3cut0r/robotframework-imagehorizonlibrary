@@ -20,6 +20,10 @@ class FakeView:
         self.after_called = None
         self.after_cancel_called = None
         self._state = initial_state
+        self._x = 1
+        self._y = 2
+        self._w = 3
+        self._h = 4
 
     def state(self, value=None):
         if value is None:
@@ -47,12 +51,25 @@ class FakeView:
     def after_cancel(self, ident):
         self.after_cancel_called = ident
 
+    def winfo_rootx(self):
+        return self._x
+
+    def winfo_rooty(self):
+        return self._y
+
+    def winfo_width(self):
+        return self._w
+
+    def winfo_height(self):
+        return self._h
+
 
 class TestTakeScreenshot(TestCase):
     def _get_controller(self, view=None, model=None):
         ctrl = UILocatorController.__new__(UILocatorController)
         ctrl.view = view or FakeView()
         ctrl.model = model or MagicMock()
+        ctrl._minimize = True
         return ctrl
 
     def test_restores_window_after_successful_capture(self):
@@ -99,3 +116,17 @@ class TestTakeScreenshot(TestCase):
         ctrl._take_screenshot()
 
         self.assertIn('state(zoomed)', view.state_calls)
+
+    def test_capture_without_minimise_masks_window(self):
+        model = MagicMock()
+        model.capture_desktop.return_value = 'img'
+        view = FakeView()
+        ctrl = self._get_controller(view=view, model=model)
+        ctrl._minimize = False
+        with patch('ImageHorizonLibrary.recognition.ImageDebugger.image_debugger_controller.ImageDraw') as mock_draw:
+            mock_draw.Draw.return_value = MagicMock()
+            result = ctrl._take_screenshot()
+        self.assertEqual(result, 'img')
+        self.assertEqual(view.state_calls, [])
+        mock_draw.Draw.assert_called_once_with('img')
+        mock_draw.Draw.return_value.rectangle.assert_called_once()
