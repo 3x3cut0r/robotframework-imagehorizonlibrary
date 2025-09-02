@@ -113,17 +113,18 @@ class UILocatorController:
         restores it after 10 seconds.
         """
         try:
-            self.view.wm_state("iconic")
+            self.view.iconify()
         except Exception as exc:  # pragma: no cover - depends on tk implementation
             raise RuntimeError(f"Failed to minimise debugger window: {exc}") from exc
 
-        restore_id = self.view.after(10000, lambda: self.view.wm_state("normal"))
+        restore_id = self.view.after(10000, self.view.deiconify)
         try:
             return self.model.capture_desktop()
         finally:
             self.view.after_cancel(restore_id)
             try:
-                self.view.wm_state("normal")
+                self.view.deiconify()
+                self.view.lift()
             except Exception as exc:  # pragma: no cover - depends on tk implementation
                 LOGGER.error(f"Restoring debugger window failed: {exc}")
     
