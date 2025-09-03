@@ -7,7 +7,6 @@ from .image_manipulation import ImageContainer, ImageFormat
 from pathlib import Path
 import os, glob
 import pyperclip
-import numpy as np
 import webbrowser
 from robot.api import logger as LOGGER
 
@@ -237,22 +236,12 @@ class UILocatorController:
             )
 
             num_of_matches_found = len(self.coord)
-            max_peak = round(np.amax(self.image_horizon_instance.peakmap), 2)
             best_score_str = (
                 f"{self.best_score:.2f}" if self.best_score is not None else "N/A"
             )
-            if max_peak < 0.75:
-                result_msg = (
-                    f"{num_of_matches_found} / max peak value below 0.75 "
-                    f"(best score = {best_score_str})"
-                )
-            else:
-                result_msg = (
-                    f"{num_of_matches_found} / {max_peak} "
-                    f"(best score = {best_score_str})"
-                )
-
-            self.view.matches_found.set(result_msg)
+            self.view.matches_found.set(
+                f"{num_of_matches_found} (best score = {best_score_str})"
+            )
             font_color = self.model.change_color_of_label(num_of_matches_found)
             self.view.label_matches_found.config(fg=font_color)
             self.view.btn_edge_detec_debugger["state"] = "normal"
