@@ -39,8 +39,13 @@ class Pyautogui(TemplateMatchingStrategy):
                 self.image_container.get_haystack_image_orig_size(ImageFormat.PILIMG),
             )
         )
-        # Each match is ``(location, score, scale)``; keep only location.
+        # Each match is ``(location, score, scale)``; keep only location and
+        # determine the best score among all matches.
         self.coord = [loc for loc, _, _ in matches]
+        self.best_score = max(
+            (score for _, score, _ in matches if score is not None),
+            default=None,
+        )
         return self.coord
 
 
@@ -60,6 +65,11 @@ class Cv2(TemplateMatchingStrategy):
                 self.image_container.get_haystack_image_orig_size(ImageFormat.NUMPYARRAY),
             )
         )
-        # Keep only location information for highlighting/plotting.
+        # Keep only location information for highlighting/plotting and store
+        # the best score for later display.
         self.coord = [loc for loc, _, _ in matches]
+        self.best_score = max(
+            (score for _, score, _ in matches if score is not None),
+            default=None,
+        )
         return self.coord
