@@ -22,6 +22,7 @@ class UILocatorController:
         self.image_horizon_instance = image_horizon_instance
         self._minimize = minimize
         self.view = UILocatorView(self, self.image_container, self.image_horizon_instance)
+        self.best_score = None
 
     def main(self):
         """Run the main UI loop."""
@@ -43,6 +44,7 @@ class UILocatorController:
         self.view.btn_copy_strategy_snippet["state"] = "disabled"
         self.view.hint_msg.set("Ready")
         self.view.processing_done = False
+        self.best_score = None
 
     def help(self):
         """Open online keyword documentation."""
@@ -77,6 +79,7 @@ class UILocatorController:
         self.view.matches_found.set("None")
         self.view.label_matches_found.config(fg='black')
         self.view.set_strategy_snippet.set("")
+        self.best_score = None
     
     def refresh(self):
         """Reload available images and reset the UI state."""
@@ -161,6 +164,7 @@ class UILocatorController:
 
             matcher = Pyautogui(self.image_container, self.image_horizon_instance)
             self.coord = matcher.find_num_of_matches()
+            self.best_score = matcher.best_score
             matcher.highlight_matches()
 
             self.haystack_image = self.image_container.get_haystack_image(
@@ -171,7 +175,12 @@ class UILocatorController:
             )
 
             num_of_matches_found = len(self.coord)
-            self.view.matches_found.set(num_of_matches_found)
+            best_score_str = (
+                f"{self.best_score:.2f}" if self.best_score is not None else "N/A"
+            )
+            self.view.matches_found.set(
+                f"{num_of_matches_found} (best score = {best_score_str})"
+            )
             font_color = self.model.change_color_of_label(num_of_matches_found)
             self.view.label_matches_found.config(fg=font_color)
 
@@ -217,6 +226,7 @@ class UILocatorController:
 
             matcher = Cv2(self.image_container, self.image_horizon_instance)
             self.coord = matcher.find_num_of_matches()
+            self.best_score = matcher.best_score
             matcher.highlight_matches()
 
             self.haystack_image = self.image_container.get_haystack_image(
@@ -228,10 +238,19 @@ class UILocatorController:
 
             num_of_matches_found = len(self.coord)
             max_peak = round(np.amax(self.image_horizon_instance.peakmap), 2)
+            best_score_str = (
+                f"{self.best_score:.2f}" if self.best_score is not None else "N/A"
+            )
             if max_peak < 0.75:
-                result_msg = f"{num_of_matches_found} / max peak value below 0.75"
+                result_msg = (
+                    f"{num_of_matches_found} / max peak value below 0.75 "
+                    f"(best score = {best_score_str})"
+                )
             else:
-                result_msg = f"{num_of_matches_found} / {max_peak}"
+                result_msg = (
+                    f"{num_of_matches_found} / {max_peak} "
+                    f"(best score = {best_score_str})"
+                )
 
             self.view.matches_found.set(result_msg)
             font_color = self.model.change_color_of_label(num_of_matches_found)
@@ -259,8 +278,11 @@ class UILocatorController:
 
     def on_click_plot_results_edge(self):
         """Display detailed edge detection results in a matplotlib window."""
+        best_score_str = (
+            f"{self.best_score:.2f}" if self.best_score is not None else "N/A"
+        )
         title = (
-            f"{self.view.matches_found.get()} matches (confidence: "
+            f"{len(self.coord)} matches (best score = {best_score_str}, confidence: "
             f"{self.image_horizon_instance.confidence})"
         )
         try:
