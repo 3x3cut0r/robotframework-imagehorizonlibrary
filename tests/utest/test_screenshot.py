@@ -65,12 +65,12 @@ class TestScreenshot(TestCase):
         expected = path_join(folder, 'ImageHorizon-screenshot-1.png')
         self.mock.screenshot.assert_called_once_with(expected, region=region)
 
-    def test_take_a_screenshot_with_window_title(self):
+    def test_take_a_screenshot_with_window(self):
         folder = path_join(CURDIR, 'reference_folder')
         self.lib.set_screenshot_folder(folder)
         window = MagicMock()
         self.mock.getWindowsWithTitle.return_value = [window]
-        self.lib.take_a_screenshot(window_title='Some Window')
+        self.lib.take_a_screenshot(window='Some Window')
         expected = path_join(folder, 'ImageHorizon-screenshot-1.png')
         window.screenshot.assert_called_once_with(expected)
         self.mock.screenshot.assert_not_called()
@@ -78,4 +78,4 @@ class TestScreenshot(TestCase):
     def test_take_a_screenshot_with_unknown_window(self):
         self.mock.getWindowsWithTitle.return_value = []
         with self.assertRaises(ValueError):
-            self.lib.take_a_screenshot(window_title='Missing')
+            self.lib.take_a_screenshot(window='Missing')
