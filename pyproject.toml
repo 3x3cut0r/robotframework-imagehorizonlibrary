@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robotframework-imagehorizonlibrary"
-version = "1.2.2"
+version = "1.2.3"
 description = "fork of https://github.com/eficode/robotframework-imagehorizonlibrary"
 authors = [
   { name="Julian Reith", email="julianreith@gmx.de" }
