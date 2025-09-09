@@ -33,7 +33,7 @@ class _Screenshot(object):
         self.screenshot_counter += 1
         return path
 
-    def take_a_screenshot(self, region=None, window_title=None):
+    def take_a_screenshot(self, region=None, window=None):
         """Capture and save a screenshot of the screen, a region or a window.
 
         Screenshots are stored either in ``screenshot_folder`` (if configured
@@ -46,7 +46,7 @@ class _Screenshot(object):
             ``(left, top, width, height)`` coordinates to capture only a
             subsection of the screen. ``None`` (default) captures the entire
             screen.
-        window_title : str, optional
+        window : str, optional
             Title of the window to capture. If provided, the first matching
             window returned by :func:`pyautogui.getWindowsWithTitle` is
             captured. Cannot be used together with ``region``.
@@ -59,7 +59,7 @@ class _Screenshot(object):
         Raises
         ------
         ValueError
-            If both ``region`` and ``window_title`` are provided or the window
+            If both ``region`` and ``window`` are provided or the window
             cannot be found.
         """
         target_dir = self.screenshot_folder if self.screenshot_folder else ""
@@ -80,15 +80,15 @@ class _Screenshot(object):
             html=True,
         )
 
-        if region and window_title:
-            raise ValueError("region and window_title are mutually exclusive")
+        if region and window:
+            raise ValueError("region and window are mutually exclusive")
 
-        if window_title:
-            windows = ag.getWindowsWithTitle(window_title)
+        if window:
+            windows = ag.getWindowsWithTitle(window)
             if not windows:
-                raise ValueError(f"Window not found: {window_title}")
-            window = windows[0]
-            window.screenshot(path)
+                raise ValueError(f"Window not found: {window}")
+            window_obj = windows[0]
+            window_obj.screenshot(path)
         else:
             if region is not None:
                 ag.screenshot(path, region=region)
