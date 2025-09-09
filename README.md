@@ -31,6 +31,9 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 - Additional edge preprocessing filters (`gaussian`, `median`, `erode`, `dilate`) for the `edge` recognition strategy.
 - Optional multi-scale search that can be enabled with `Set Scale Range`.
 - Keywords such as `Wait For`, `Locate`, and `Locate All` now have a working timout function and return the correlation score (`score`) and detected scaling factor (`scale`).
+- Debugger now displays the best match score for located images.
+- Edge detection result messages in the debugger have been simplified.
+- `Take A Screenshot` keyword can now capture a specific `region` or `window`.
 - Installation metadata managed via `pyproject.toml`, updated dependencies and removed depricated `setup.py|cfg` files.
 - Removed unused dependencies and replaced `scikit-image` with headless OpenCV (`opencv-python-headless`).
 - Various documentation improvements and safe version handling.
@@ -126,49 +129,49 @@ Generated keyword documentation is available in
 
 ## Robot keywords
 
-| Keyword | Description |
-| --- | --- |
-| Click | Click once with the specified mouse button. |
-| Click Image | Locate an image on screen and click its center once. |
-| Click To The Above Of | Click above a location by a given pixel offset. |
-| Click To The Above Of Image | Click above a located reference image by a pixel offset. |
-| Click To The Below Of | Click below a location by a given pixel offset. |
-| Click To The Below Of Image | Click below a located reference image by a pixel offset. |
-| Click To The Left Of | Click left of a location by a given pixel offset. |
-| Click To The Left Of Image | Click left of a located reference image by a pixel offset. |
-| Click To The Right Of | Click right of a location by a given pixel offset. |
-| Click To The Right Of Image | Click right of a located reference image by a pixel offset. |
-| Copy | Copy currently selected text to the system clipboard. |
-| Copy From The Above Of | Copy text above a reference image. |
-| Copy From The Below Of | Copy text below a reference image. |
-| Copy From The Left Of | Copy text left of a reference image. |
-| Copy From The Right Of | Copy text right of a reference image. |
-| Debug Image | Halts the test execution and opens the image debugger UI; accepts an optional reference folder and a ``minimize`` flag to hide the debugger window during screenshots (defaults to visible). |
-| Does Exist | Check whether a reference image exists on the screen. |
-| Double Click | Double-click with the specified mouse button. |
-| Get Clipboard Content | Return the current text from the system clipboard. |
-| Launch Application | Launch an external application as a new process. |
-| Locate | Locate image on screen. |
-| Locate All | Locate all occurrences of an image on screen. |
-| Mouse Down | Press and hold a mouse button. |
-| Mouse Up | Release a previously pressed mouse button. |
-| Move To | Move the mouse pointer to absolute screen coordinates. |
-| Pause | Display a modal dialog to temporarily halt test execution. |
-| Press Combination | Press multiple keyboard keys simultaneously. |
-| Reset Confidence | Resets the confidence level to the library default. |
-| Reset Scale Range | Disables multi-scale search and resets to defaults. |
-| Set Confidence | Sets the accuracy when finding images. |
-| Set Keyword On Failure | Sets keyword to be run, when location-related keywords fail. |
-| Set Reference Folder | Sets where all reference images are stored. |
-| Set Scale Range | Enables searching images across a range of scales. |
-| Set Screenshot Folder | Sets the folder where screenshots are saved to. |
-| Set Strategy | Changes the way how images are detected on the screen. |
-| Take A Screenshot | Capture and save a screenshot of the current screen, a region or a specific window. |
-| Terminate Application | Terminate a process started with :py:meth:launch_application. |
-| Triple Click | Triple-click with the specified mouse button. |
-| Type | Type a sequence of text fragments and/or special keys. |
-| Type With Keys Down | Hold down keyboard keys while typing text. |
-| Wait For | Wait until an image appears on the screen. |
+| Keyword                     | Description                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Click                       | Click once with the specified mouse button.                                                                                                                                                |
+| Click Image                 | Locate an image on screen and click its center once.                                                                                                                                       |
+| Click To The Above Of       | Click above a location by a given pixel offset.                                                                                                                                            |
+| Click To The Above Of Image | Click above a located reference image by a pixel offset.                                                                                                                                   |
+| Click To The Below Of       | Click below a location by a given pixel offset.                                                                                                                                            |
+| Click To The Below Of Image | Click below a located reference image by a pixel offset.                                                                                                                                   |
+| Click To The Left Of        | Click left of a location by a given pixel offset.                                                                                                                                          |
+| Click To The Left Of Image  | Click left of a located reference image by a pixel offset.                                                                                                                                 |
+| Click To The Right Of       | Click right of a location by a given pixel offset.                                                                                                                                         |
+| Click To The Right Of Image | Click right of a located reference image by a pixel offset.                                                                                                                                |
+| Copy                        | Copy currently selected text to the system clipboard.                                                                                                                                      |
+| Copy From The Above Of      | Copy text above a reference image.                                                                                                                                                         |
+| Copy From The Below Of      | Copy text below a reference image.                                                                                                                                                         |
+| Copy From The Left Of       | Copy text left of a reference image.                                                                                                                                                       |
+| Copy From The Right Of      | Copy text right of a reference image.                                                                                                                                                      |
+| Debug Image                 | Halts the test execution and opens the image debugger UI; accepts an optional reference folder and a `minimize` flag to hide the debugger window during screenshots (defaults to visible). |
+| Does Exist                  | Check whether a reference image exists on the screen.                                                                                                                                      |
+| Double Click                | Double-click with the specified mouse button.                                                                                                                                              |
+| Get Clipboard Content       | Return the current text from the system clipboard.                                                                                                                                         |
+| Launch Application          | Launch an external application as a new process.                                                                                                                                           |
+| Locate                      | Locate image on screen.                                                                                                                                                                    |
+| Locate All                  | Locate all occurrences of an image on screen.                                                                                                                                              |
+| Mouse Down                  | Press and hold a mouse button.                                                                                                                                                             |
+| Mouse Up                    | Release a previously pressed mouse button.                                                                                                                                                 |
+| Move To                     | Move the mouse pointer to absolute screen coordinates.                                                                                                                                     |
+| Pause                       | Display a modal dialog to temporarily halt test execution.                                                                                                                                 |
+| Press Combination           | Press multiple keyboard keys simultaneously.                                                                                                                                               |
+| Reset Confidence            | Resets the confidence level to the library default.                                                                                                                                        |
+| Reset Scale Range           | Disables multi-scale search and resets to defaults.                                                                                                                                        |
+| Set Confidence              | Sets the accuracy when finding images.                                                                                                                                                     |
+| Set Keyword On Failure      | Sets keyword to be run, when location-related keywords fail.                                                                                                                               |
+| Set Reference Folder        | Sets where all reference images are stored.                                                                                                                                                |
+| Set Scale Range             | Enables searching images across a range of scales.                                                                                                                                         |
+| Set Screenshot Folder       | Sets the folder where screenshots are saved to.                                                                                                                                            |
+| Set Strategy                | Changes the way how images are detected on the screen.                                                                                                                                     |
+| Take A Screenshot           | Capture and save a screenshot of the current screen, a region or a specific window.                                                                                                        |
+| Terminate Application       | Terminate a process started with :py:meth:launch_application.                                                                                                                              |
+| Triple Click                | Triple-click with the specified mouse button.                                                                                                                                              |
+| Type                        | Type a sequence of text fragments and/or special keys.                                                                                                                                     |
+| Type With Keys Down         | Hold down keyboard keys while typing text.                                                                                                                                                 |
+| Wait For                    | Wait until an image appears on the screen.                                                                                                                                                 |
 
 ## Prerequisites
 
@@ -191,7 +194,7 @@ python3 -m pip install robotframework-imagehorizonlibrary
 This will automatically install dependencies as well as their dependencies.
 
 If you want to use the optional Image Debugger that relies on matplotlib,
-install the library with the ``debug`` extra:
+install the library with the `debug` extra:
 
 ```
 python3 -m pip install "robotframework-imagehorizonlibrary[debug]"
