@@ -163,7 +163,7 @@ Generated keyword documentation is available in
 | Set Scale Range | Enables searching images across a range of scales. |
 | Set Screenshot Folder | Sets the folder where screenshots are saved to. |
 | Set Strategy | Changes the way how images are detected on the screen. |
-| Take A Screenshot | Capture and save a screenshot of the current screen. |
+| Take A Screenshot | Capture and save a screenshot of the current screen, a region or a specific window. |
 | Terminate Application | Terminate a process started with :py:meth:launch_application. |
 | Triple Click | Triple-click with the specified mouse button. |
 | Type | Type a sequence of text fragments and/or special keys. |
