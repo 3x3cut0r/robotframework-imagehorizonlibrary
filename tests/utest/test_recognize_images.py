@@ -231,6 +231,18 @@ class TestRecognizeImages(TestCase):
             # default timeout
             self.assertLess(stop-start, 10)
 
+    def test_set_keyword_on_failure_runs_custom_keyword(self):
+        with patch('ImageHorizonLibrary.BuiltIn.run_keyword') as run_keyword:
+            self.lib.set_keyword_on_failure('Log')
+            self.lib._run_on_failure()
+            run_keyword.assert_called_once_with('Log')
+
+    def test_set_keyword_on_failure_can_be_disabled(self):
+        with patch('ImageHorizonLibrary.BuiltIn.run_keyword') as run_keyword:
+            self.lib.set_keyword_on_failure(None)
+            self.lib._run_on_failure()
+            run_keyword.assert_not_called()
+
     def _verify_path_works(self, image_name, expected):
         self.lib.locate(image_name)
         expected_path = path_join(TESTIMG_DIR, expected)

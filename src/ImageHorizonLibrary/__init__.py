@@ -480,10 +480,13 @@ class ImageHorizonLibrary(
             LOGGER.warn("Failed to take a screenshot. " "Is Robot Framework running?")
 
     def set_keyword_on_failure(self, keyword_on_failure):
-        """Sets keyword to be run, when location-related
-        keywords fail.
-        This keyword might be used to temporarily diable screenshots, then re-enable them later in the test.
-        See `library importing` for he usage of keyword_on_failure.
+        """Sets the keyword to run when location-related keywords fail.
+
+        Can be used to change the failure behaviour during a test. Use
+        ``BuiltIn.No Operation`` or ``None`` to disable screenshots temporarily
+        and call this keyword again later to restore them.
+
+        See `library importing` for usage of ``keyword_on_failure``.
         """
         self.keyword_on_failure = keyword_on_failure
 
