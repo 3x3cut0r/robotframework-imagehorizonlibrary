@@ -836,7 +836,7 @@ class _StrategyPyautogui:
                             "or a confidence level was not given."
                         )
                     location_res = locate_func(ref_image, haystack_image)
-            except ImageNotFoundException as ex:
+            except (ImageNotFoundException, ag.ImageNotFoundException) as ex:
                 LOGGER.info(ex)
                 location_res = None
 
