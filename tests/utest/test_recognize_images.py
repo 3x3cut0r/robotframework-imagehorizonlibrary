@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 import time
 
-from unittest import TestCase, skip
+from unittest import TestCase, SkipTest
 from os.path import abspath, dirname, join as path_join
 from unittest.mock import call, MagicMock, patch, ANY
 
-import pytest
 try:  # pragma: no cover - optional dependency
     import cv2
 except Exception:  # pragma: no cover - skip tests if OpenCV is missing/broken
     cv2 = None
-    pytest.skip("OpenCV is not available", allow_module_level=True)
+    raise SkipTest("OpenCV is not available")
 
 import numpy as np
 
