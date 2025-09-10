@@ -9,7 +9,6 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 
 - [Notable differences to the original project](#notable-differences-to-the-original-project)
 - [Introduction](#introduction)
-- [Reference image names](#reference-image-names)
 - [Edge preprocessing](#edge-preprocessing)
 - [Edge detection parameters](#edge-detection-parameters)
 - [Keyword documentation](#keyword-documentation)
@@ -36,6 +35,11 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 - Debugger now displays the best match score for located images.
 - Edge detection result messages in the debugger have been simplified.
 - `Take A Screenshot` keyword can now capture a specific `region` or `window`.
+- Reference image names are normalized automatically:
+  - Names are converted to lowercase.
+  - Spaces are replaced with underscores `_`.
+  - `.png` is appended if missing; `.PNG` is accepted with a warning if casing differs from the file on disk.
+  - The reference folder path is prepended when using `reference_folder`.
 - Installation metadata managed via `pyproject.toml`, updated dependencies and removed depricated `setup.py|cfg` files.
 - Removed unused dependencies and replaced `scikit-image` with headless OpenCV (`opencv-python-headless`).
 - Various documentation improvements and safe version handling.
@@ -55,16 +59,6 @@ to install `opencv-python` if you do not use confidence level.
 By default ImageHorizonLibrary uses the `default` strategy. The `edge`
 strategy can be enabled when dealing with screens that contain unpredictable
 pixel deviations.
-
-## Reference image names
-
-For ease of use, reference image names are normalized automatically:
-
-- The name is lower cased: `MYPICTURE` and `mYPiCtUrE` become `mypicture`.
-- All spaces are converted to underscore `_`: `my picture` becomes `my_picture`.
-- If the image name does not end in `.png` (case-insensitive), `.png` is appended: `mypicture` becomes `mypicture.png`.
-- The extension `.PNG` is also accepted. The library normalizes the name to lowercase and logs a warning if the casing differs from the actual file on disk.
-- The path to the reference folder is prepended when the library is imported with `reference_folder`.
 
 ## Edge preprocessing
 
