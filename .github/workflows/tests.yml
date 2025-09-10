@@ -33,10 +33,10 @@ jobs:
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
 
       - name: Setup python ${{ matrix.python-version }} for running the tests
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           architecture: 'x64'
@@ -70,7 +70,7 @@ jobs:
           python tests/atest/run_tests.py
 
       - name: Archive acceptances test results
-        uses: actions/upload-artifact@v2.3.0
+        uses: actions/upload-artifact@v4
         with:
           name: output-${{ matrix.python-version }}-${{ matrix.os }}
           path: |
