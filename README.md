@@ -298,6 +298,7 @@ Browser is used by Eel for cross-platform GUI demo application.
 ```
 sudo apt install scrot chromium-browser
 python3 -m pip install opencv-python eel
+export RUN_GUI_TESTS=1
 python3 tests/atest/run_tests.py
 ```
 
