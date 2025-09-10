@@ -296,7 +296,8 @@ Browser is used by Eel for cross-platform GUI demo application.
 `scrot` is used for capturing screenshots.
 
 ```
-python3 -m pip install opencv-python eel scrot chromium-browser
+sudo apt install scrot chromium-browser
+python3 -m pip install opencv-python eel
 python3 tests/atest/run_tests.py
 ```
 
