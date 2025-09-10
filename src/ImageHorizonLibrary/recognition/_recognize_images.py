@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from os import listdir
-from os.path import abspath, isdir, isfile, join as path_join
+from os.path import abspath, basename, dirname, isdir, isfile, join as path_join
 from time import time, sleep
 from contextlib import contextmanager
 
@@ -95,7 +95,23 @@ class _RecognizeImages(object):
         if not path.endswith(".png") and not isdir(path):
             path += ".png"
         if not isfile(path) and not isdir(path):
-            raise InvalidImageException('Image path not found: "%s".' % path)
+            dir_name = dirname(path)
+            file_name = basename(path)
+            try:
+                candidates = listdir(dir_name)
+            except Exception:
+                candidates = []
+            matches = [c for c in candidates if c.lower() == file_name.lower()]
+            if matches:
+                selected = file_name if file_name in matches else matches[0]
+                if selected != file_name:
+                    LOGGER.warn(
+                        'Image name differs in case: expected "%s" but found "%s".'
+                        % (file_name, selected)
+                    )
+                path = abspath(path_join(dir_name, selected))
+            else:
+                raise InvalidImageException('Image path not found: "%s".' % path)
         return path
 
     def click_image(self, reference_image, timeout=dflt_timeout):
