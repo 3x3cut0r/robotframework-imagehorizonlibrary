@@ -52,6 +52,27 @@ class TestRecognizeImages(TestCase):
         self.mock.locate.assert_called_once_with(expected_path, ANY)
         self.mock.reset_mock()
 
+    def test_normalize_warns_on_case_difference(self):
+        with patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+            result = self.lib._normalize('My_Picture.png')
+            expected = path_join(TESTIMG_DIR, 'my_picture.png')
+            self.assertEqual(result, expected)
+            log.warn.assert_called_once_with("Image 'My_Picture.png' found as 'my_picture.png'")
+
+    def test_normalize_warns_on_extension_difference(self):
+        with patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+            result = self.lib._normalize('my_picture')
+            expected = path_join(TESTIMG_DIR, 'my_picture.png')
+            self.assertEqual(result, expected)
+            log.warn.assert_called_once_with("Image 'my_picture' found as 'my_picture.png'")
+
+    def test_normalize_ignores_space_replacement(self):
+        with patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+            result = self.lib._normalize('my picture.png')
+            expected = path_join(TESTIMG_DIR, 'my_picture.png')
+            self.assertEqual(result, expected)
+            log.warn.assert_not_called()
+
     def test_click_image(self):
         with patch(self._locate, return_value=(0, 0, 1.0, 1.0)):
             self.lib.click_image('my_picture')
