@@ -5,7 +5,8 @@ from unittest import TestCase, SkipTest
 from os.path import abspath, dirname, join as path_join
 from unittest.mock import call, MagicMock, patch, ANY
 import shutil
-import pytest
+import tempfile
+from pathlib import Path
 
 try:  # pragma: no cover - optional dependency
     import cv2
@@ -383,40 +384,42 @@ class TestRecognizeImages(TestCase):
         self.assertAlmostEqual(scale, scale_factor, delta=0.05)
 
 
-def test_locate_warns_about_case_mismatch(tmp_path):
-    mock = MagicMock()
-    with patch.dict('sys.modules', {'pyautogui': mock}):
-        from ImageHorizonLibrary import ImageHorizonLibrary
+class TestLocateStandalone(TestCase):
+    def test_locate_warns_about_case_mismatch(self):
+        mock = MagicMock()
+        with patch.dict('sys.modules', {'pyautogui': mock}):
+            from ImageHorizonLibrary import ImageHorizonLibrary
 
-        src = path_join(TESTIMG_DIR, 'my_picture.png')
-        dst = tmp_path / 'My_Picture.PNG'
-        shutil.copy(src, dst)
+            src = path_join(TESTIMG_DIR, 'my_picture.png')
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                dst = Path(tmp_dir) / 'My_Picture.PNG'
+                shutil.copy(src, dst)
 
-        def _dummy_locate(self, reference_image):
-            self._normalize(reference_image)
-            return (0, 0, 1.0, 1.0)
+                def _dummy_locate(self, reference_image):
+                    self._normalize(reference_image)
+                    return (0, 0, 1.0, 1.0)
 
-        with patch.object(ImageHorizonLibrary, '_locate', _dummy_locate):
-            lib = ImageHorizonLibrary(reference_folder=str(tmp_path))
-            for name in ('MY_PICTURE', 'My_Picture.PNG'):
-                with patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
-                    lib.locate(name)
-                    log.warn.assert_called_once()
+                with patch.object(ImageHorizonLibrary, '_locate', _dummy_locate):
+                    lib = ImageHorizonLibrary(reference_folder=tmp_dir)
+                    for name in ('MY_PICTURE', 'My_Picture.PNG'):
+                        with patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
+                            lib.locate(name)
+                            log.warn.assert_called_once()
 
+    def test_locate_raises_for_missing_file(self):
+        mock = MagicMock()
+        with patch.dict('sys.modules', {'pyautogui': mock}):
+            from ImageHorizonLibrary import ImageHorizonLibrary, InvalidImageException
 
-def test_locate_raises_for_missing_file(tmp_path):
-    mock = MagicMock()
-    with patch.dict('sys.modules', {'pyautogui': mock}):
-        from ImageHorizonLibrary import ImageHorizonLibrary, InvalidImageException
+            def _dummy_locate(self, reference_image):
+                self._normalize(reference_image)
+                return (0, 0, 1.0, 1.0)
 
-        def _dummy_locate(self, reference_image):
-            self._normalize(reference_image)
-            return (0, 0, 1.0, 1.0)
-
-        with patch.object(ImageHorizonLibrary, '_locate', _dummy_locate):
-            lib = ImageHorizonLibrary(reference_folder=str(tmp_path))
-            with pytest.raises(InvalidImageException):
-                lib.locate('does_not_exist')
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                with patch.object(ImageHorizonLibrary, '_locate', _dummy_locate):
+                    lib = ImageHorizonLibrary(reference_folder=tmp_dir)
+                    with self.assertRaises(InvalidImageException):
+                        lib.locate('does_not_exist')
 
 
 class TestEdgeDetection(TestCase):
