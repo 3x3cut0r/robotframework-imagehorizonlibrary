@@ -42,7 +42,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
   - The reference folder path is prepended when using `reference_folder`.
 - Installation metadata managed via `pyproject.toml`, updated dependencies and removed deprecated `setup.py|cfg` files.
 - Removed unused dependencies and replaced `scikit-image` with headless OpenCV (`opencv-python-headless`).
-- Various documentation improvements and safe version handling.
+- Various documentation improvements, implemented new tests, dropped pytest dependency and added safe version handling.
 
 ## Introduction
 
