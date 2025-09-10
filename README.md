@@ -9,6 +9,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 
 - [Notable differences to the original project](#notable-differences-to-the-original-project)
 - [Introduction](#introduction)
+- [Reference image names](#reference-image-names)
 - [Edge preprocessing](#edge-preprocessing)
 - [Edge detection parameters](#edge-detection-parameters)
 - [Keyword documentation](#keyword-documentation)
@@ -55,6 +56,16 @@ By default ImageHorizonLibrary uses the `default` strategy. The `edge`
 strategy can be enabled when dealing with screens that contain unpredictable
 pixel deviations.
 
+## Reference image names
+
+For ease of use, reference image names are normalized automatically:
+
+- The name is lower cased: `MYPICTURE` and `mYPiCtUrE` become `mypicture`.
+- All spaces are converted to underscore `_`: `my picture` becomes `my_picture`.
+- If the image name does not end in `.png` (case-insensitive), `.png` is appended: `mypicture` becomes `mypicture.png`.
+- The extension `.PNG` is also accepted. The library normalizes the name to lowercase and logs a warning if the casing differs from the actual file on disk.
+- The path to the reference folder is prepended when the library is imported with `reference_folder`.
+
 ## Edge preprocessing
 
 When using the `edge` recognition strategy you can optionally apply a
@@ -96,7 +107,7 @@ Additional usage examples for the `edge` strategy:
 ```
 | # use with auto-detected parameters
 | Set Strategy | edge |
-| Click Image | button.png |
+| Click Image | button.PNG |
 | # provide explicit thresholds and confidence
 | Set Strategy | edge | edge_sigma=2.0 | edge_low_threshold=0.1 | edge_high_threshold=0.3 | confidence=0.8 |
 | # enable edge preprocessing with a custom kernel
