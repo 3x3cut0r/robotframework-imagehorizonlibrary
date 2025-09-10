@@ -66,8 +66,11 @@ class ImageHorizonLibrary(
     - All spaces are converted to underscore ``_``: ``my picture`` becomes
       ``my_picture``
 
-    - If the image name does not end in ``.png``, it will be added:
-      ``mypicture`` becomes ``mypicture.png``
+    - If the image name does not end in ``.png`` (case-insensitive), it will
+      be added: ``mypicture`` becomes ``mypicture.png``.
+    - The extension ``.PNG`` is also accepted. The name is normalized to
+      lower case and a warning is logged if the provided case does not match
+      the actual file on disk.
 
     - Path to _reference folder_ is prepended. This option must be given when
       `importing` the library.
