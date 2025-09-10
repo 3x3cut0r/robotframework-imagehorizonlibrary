@@ -290,13 +290,13 @@ python3 tests/utest/run_tests.py [verbosity=2]
 
 ## Running acceptance tests
 
-Additionally to unit test dependencies, you also need OpenCV, Eel, `scrot` and Chrome/Chromium browser.
+Additionally to unit test dependencies, you also need OpenCV, Eel, Scrot and Chrome/Chromium browser.
 OpenCV is used because these tests are testing also confidence level.
 Browser is used by Eel for cross-platform GUI demo application.
 `scrot` is used for capturing screenshots.
 
 ```
-python3 -m pip install opencv-python eel
+python3 -m pip install opencv-python eel scrot chromium-browser
 python3 tests/atest/run_tests.py
 ```
 
