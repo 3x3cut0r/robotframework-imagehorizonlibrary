@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from os import listdir
-from os.path import abspath, basename, dirname, isdir, isfile, join as path_join
+from os.path import abspath, basename, dirname, isdir, isfile, splitext, join as path_join
 from time import time, sleep
 from contextlib import contextmanager
 
@@ -88,6 +88,7 @@ class _RecognizeImages(object):
             raise ReferenceFolderException(
                 "Reference folder is invalid: " '"%s"' % self.reference_folder
             )
+        original_input = path
         if not isinstance(path, str) or path == "":
             raise InvalidImageException('"%s" is invalid image name.' % path)
         path = str(path.lower().replace(" ", "_"))
@@ -104,14 +105,19 @@ class _RecognizeImages(object):
             matches = [c for c in candidates if c.lower() == file_name.lower()]
             if matches:
                 selected = file_name if file_name in matches else matches[0]
-                if selected != file_name:
-                    LOGGER.warn(
-                        'Image name differs in case: expected "%s" but found "%s".'
-                        % (file_name, selected)
-                    )
                 path = abspath(path_join(dir_name, selected))
             else:
                 raise InvalidImageException('Image path not found: "%s".' % path)
+
+        original = basename(original_input)
+        actual = basename(path)
+        orig_name, orig_ext = splitext(original.replace(" ", "_"))
+        act_name, act_ext = splitext(actual)
+        if orig_name.lower() == act_name.lower():
+            name_case_diff = orig_name != act_name
+            extension_diff = orig_ext != act_ext
+            if name_case_diff or extension_diff:
+                LOGGER.warn(f"Image '{original}' found as '{actual}'")
         return path
 
     def click_image(self, reference_image, timeout=dflt_timeout):
