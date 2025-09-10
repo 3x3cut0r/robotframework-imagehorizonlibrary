@@ -31,7 +31,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 - Added `edge` recognition strategy using OpenCV (`cv2`) for robust matching on screens with pixel deviations.
 - Additional edge preprocessing filters (`gaussian`, `median`, `erode`, `dilate`) for the `edge` recognition strategy.
 - Optional multi-scale search that can be enabled with `Set Scale Range`.
-- Keywords such as `Wait For`, `Locate`, and `Locate All` now have a working timout function and return the correlation score (`score`) and detected scaling factor (`scale`).
+- Keywords such as `Wait For`, `Locate`, and `Locate All` now have a working timeout function and return the correlation score (`score`) and detected scaling factor (`scale`).
 - Debugger now displays the best match score for located images.
 - Edge detection result messages in the debugger have been simplified.
 - `Take A Screenshot` keyword can now capture a specific `region` or `window`.
@@ -40,7 +40,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
   - Spaces are replaced with underscores `_`.
   - `.png` is appended if missing; `.PNG` is accepted with a warning if casing differs from the file on disk.
   - The reference folder path is prepended when using `reference_folder`.
-- Installation metadata managed via `pyproject.toml`, updated dependencies and removed depricated `setup.py|cfg` files.
+- Installation metadata managed via `pyproject.toml`, updated dependencies and removed deprecated `setup.py|cfg` files.
 - Removed unused dependencies and replaced `scikit-image` with headless OpenCV (`opencv-python-headless`).
 - Various documentation improvements and safe version handling.
 
