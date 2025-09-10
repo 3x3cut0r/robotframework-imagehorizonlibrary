@@ -27,7 +27,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
 ## Notable differences to the original project
 
 - Merged all open RP on original repository.
-- Compatibility with Python 3.11 and Robot Framework 7.
+- Compatibility with Python >=3.9 and Robot Framework 7.
 - Added `edge` recognition strategy using OpenCV (`cv2`) for robust matching on screens with pixel deviations.
 - Additional edge preprocessing filters (`gaussian`, `median`, `erode`, `dilate`) for the `edge` recognition strategy.
 - Optional multi-scale search that can be enabled with `Set Scale Range`.
@@ -181,7 +181,7 @@ Generated keyword documentation is available in
 
 ## Prerequisites
 
-- Python 3.x
+- Python >=3.9
 - pip (via `python3 -m pip`) for easy installation
 - Robot Framework
 
@@ -259,6 +259,7 @@ Then build the wheel:
 ```
 pip wheel . --no-deps
 ```
+
 ## Building with Docker
 
 Dockerfiles are provided to build wheels in isolated environments.
@@ -280,7 +281,6 @@ CID=$(docker create imagehorizonlib-wheel:arm64)
 docker cp $CID:/work/dist ./dist
 docker rm $CID
 ```
-
 
 ## Running unit tests
 
