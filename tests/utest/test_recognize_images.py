@@ -403,7 +403,7 @@ class TestLocateStandalone(TestCase):
 
                 with patch.object(ImageHorizonLibrary, '_locate', _dummy_locate):
                     lib = ImageHorizonLibrary(reference_folder=tmp_dir)
-                    for name in ('MY_PICTURE', 'My_Picture.PNG'):
+                    for name in ('MY_PICTURE', 'My_Picture.png'):
                         with patch('ImageHorizonLibrary.recognition._recognize_images.LOGGER') as log:
                             lib.locate(name)
                             log.warn.assert_called_once()
