@@ -19,6 +19,7 @@ Documentation has been adapted for GitHub Pages and is available at [https://3x3
   - [macOS](#macos)
   - [Linux](#linux)
 - [Building from source](#building-from-source)
+- [Building with Docker](#building-with-docker)
 - [Running unit tests](#running-unit-tests)
 - [Running acceptance tests](#running-acceptance-tests)
 - [Updating docs](#updating-docs)
@@ -253,6 +254,28 @@ Then build the wheel:
 ```
 pip wheel . --no-deps
 ```
+## Building with Docker
+
+Dockerfiles are provided to build wheels in isolated environments.
+
+### x86_64
+
+```bash
+docker build -t imagehorizonlib-wheel .
+CID=$(docker create imagehorizonlib-wheel)
+docker cp $CID:/work/dist ./dist
+docker rm $CID
+```
+
+### arm64
+
+```bash
+docker build -f Dockerfile.arm64 -t imagehorizonlib-wheel:arm64 .
+CID=$(docker create imagehorizonlib-wheel:arm64)
+docker cp $CID:/work/dist ./dist
+docker rm $CID
+```
+
 
 ## Running unit tests
 
