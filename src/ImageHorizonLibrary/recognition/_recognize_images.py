@@ -7,6 +7,11 @@ from contextlib import contextmanager
 import pyautogui as ag
 from robot.api import logger as LOGGER
 
+# ``cv2`` imports ``numpy`` internally.  Import ``numpy`` explicitly first to
+# ensure it is loaded only once and avoid "module reloaded" warnings on Python
+# 3.12+.
+import numpy as np
+
 try:  # pragma: no cover - optional dependency
     import cv2
     # ``DictValue`` vanished from some OpenCV builds.  Tests exercising the
@@ -33,7 +38,6 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - graceful fallback when cv2 is missing
     cv2 = None
 
-import numpy as np
 import traceback
 
 
