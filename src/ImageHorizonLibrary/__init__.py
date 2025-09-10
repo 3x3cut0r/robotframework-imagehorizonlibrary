@@ -371,7 +371,7 @@ class ImageHorizonLibrary(
         self._try_locate = self.strategy_instance._try_locate
 
     def _get_location(self, direction, location, offset):
-        x, y = location
+        x, y = location[:2]
         offset = int(offset)
         if direction == "left":
             x = x - offset

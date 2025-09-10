@@ -17,7 +17,9 @@ class _Mouse(object):
         direction : str
             One of ``'up'``, ``'down'``, ``'left'`` or ``'right'``.
         location : sequence
-            Two-item sequence ``(x, y)`` representing a screen coordinate.
+            Sequence ``(x, y[, score, scale])`` representing a screen
+            coordinate. Additional values such as match score or scale are
+            ignored.
         offset : int
             Distance in pixels from ``location`` towards ``direction``.
         clicks : int
@@ -40,7 +42,8 @@ class _Mouse(object):
         Parameters
         ----------
         location : sequence
-            Two-item sequence ``(x, y)`` describing a screen coordinate.
+            Sequence ``(x, y[, score, scale])`` describing a screen
+            coordinate. Extra values like match score or scale are ignored.
         offset : int
             Number of pixels the click is moved upwards from ``location``.
         clicks : int, optional
