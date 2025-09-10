@@ -4,6 +4,14 @@ import sys
 
 from os.path import abspath, dirname, join as path_join
 from unittest import TestLoader, TextTestRunner
+import warnings
+
+# Suppress spurious warnings from OpenCV reimporting NumPy during test discovery
+warnings.filterwarnings(
+    "ignore",
+    message="The NumPy module was reloaded",
+    category=UserWarning,
+)
 
 directory = dirname(__file__)
 path = path_join(abspath(path_join(directory, '..', '..', 'src')))

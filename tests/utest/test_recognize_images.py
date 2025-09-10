@@ -8,13 +8,15 @@ import shutil
 import tempfile
 from pathlib import Path
 
+# Import ``numpy`` before ``cv2`` to avoid "module reloaded" warnings when OpenCV
+# pulls it in internally during import.
+import numpy as np
+
 try:  # pragma: no cover - optional dependency
     import cv2
 except Exception:  # pragma: no cover - skip tests if OpenCV is missing/broken
     cv2 = None
     raise SkipTest("OpenCV is not available")
-
-import numpy as np
 
 CURDIR = abspath(dirname(__file__))
 TESTIMG_DIR = path_join(CURDIR, 'reference_images')
