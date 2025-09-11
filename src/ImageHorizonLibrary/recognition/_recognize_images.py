@@ -649,7 +649,11 @@ class _RecognizeImages(object):
                 try:
                     location = self._locate(reference_image, log_it=True)
                     break
-                except ImageNotFoundException as e:
+                except (InvalidImageException, ReferenceFolderException):
+                    # These indicate a permanent misconfiguration and should not
+                    # be retried within this loop.
+                    raise
+                except Exception as e:  # pragma: no cover - defensive catch
                     last_exc = e
                     if time() > stop_time:
                         break
@@ -657,6 +661,9 @@ class _RecognizeImages(object):
         if location is None:
             self._run_on_failure()
             if last_exc is not None:
+                # Propagate original error after waiting for the timeout. If the
+                # error was not our ``ImageNotFoundException`` it represents an
+                # unexpected failure and is raised as-is.
                 raise last_exc
             raise ImageNotFoundException(self._normalize(reference_image))
         x, y, score, scale = location

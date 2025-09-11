@@ -231,6 +231,16 @@ class TestRecognizeImages(TestCase):
             # default timeout
             self.assertLess(stop-start, 10)
 
+    def test_wait_for_retries_on_generic_exception(self):
+        run_on_failure = MagicMock()
+        # first call raises a generic exception, second succeeds
+        side_effect = [Exception("fail"), (0, 0, 1.0, 1.0)]
+        with patch(self._locate, side_effect=side_effect), \
+             patch.object(self.lib, '_run_on_failure', run_on_failure):
+            result = self.lib.wait_for('my_picture', timeout=1)
+            self.assertEqual(result, (0, 0, 1.0, 1.0))
+            self.assertEqual(len(run_on_failure.mock_calls), 0)
+
     def test_set_keyword_on_failure_runs_custom_keyword(self):
         with patch('ImageHorizonLibrary.BuiltIn.run_keyword') as run_keyword:
             self.lib.set_keyword_on_failure('Log')
