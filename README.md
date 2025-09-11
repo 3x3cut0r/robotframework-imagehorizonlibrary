@@ -103,7 +103,7 @@ Additional usage examples for the `edge` strategy:
 | Set Strategy | edge |
 | Click Image | button.PNG |
 | # provide explicit thresholds and confidence
-| Set Strategy | edge | edge_sigma=2.0 | edge_low_threshold=0.1 | edge_high_threshold=0.3 | confidence=0.8 |
+| Set Strategy | edge | edge_sigma=2.0 | edge_low_threshold=0.1 | edge_high_threshold=0.3 | confidence=0.9 |
 | # enable edge preprocessing with a custom kernel
 | Set Strategy | edge | edge_preprocess=median | edge_kernel_size=7 |
 ```

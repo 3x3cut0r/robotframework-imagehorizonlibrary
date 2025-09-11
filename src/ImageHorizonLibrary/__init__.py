@@ -164,7 +164,7 @@ class ImageHorizonLibrary(
     | # use with defaults (parameters auto-detected per image)
     | Set Strategy  edge
     | # use with custom parameters
-    | Set Strategy  edge  edge_sigma=2.0  edge_low_threshold=0.1  edge_high_threshold=0.3  confidence=0.8
+    | Set Strategy  edge  edge_sigma=2.0  edge_low_threshold=0.1  edge_high_threshold=0.3  confidence=0.9
     | # enable edge preprocessing with a custom kernel
     | Set Strategy  edge  edge_preprocess=gaussian  edge_kernel_size=5
 

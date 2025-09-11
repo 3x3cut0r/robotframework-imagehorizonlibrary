@@ -754,7 +754,7 @@ class _StrategyPyautogui:
                 haystack_gray = haystack_np
             needle_gray = cv2.imread(ref_image, cv2.IMREAD_GRAYSCALE)
             scales = np.linspace(ih.scale_min, ih.scale_max, ih.scale_steps)
-            confidence = ih.confidence or 0.999
+            confidence = ih.confidence or 0.9
             if locate_all:
                 matches = []
                 for scale in scales:
@@ -886,7 +886,7 @@ class _StrategyPyautogui:
 class _StrategyCv2:
     """Image matching strategy using OpenCV edge detection."""
 
-    _CV_DEFAULT_CONFIDENCE = 0.8
+    _CV_DEFAULT_CONFIDENCE = 0.9
 
     def __init__(self, image_horizon_instance):
         """Store reference to the owning ImageHorizonLibrary instance."""
