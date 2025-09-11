@@ -31,11 +31,11 @@ class UILocatorController:
     def init_view(self):
         """Initialise default values for the view widgets."""
         self.view.ref_dir_path.set(self.image_horizon_instance.reference_folder)
-        self.view.scale_conf_lvl_ag.set(0.99)
+        self.view.scale_conf_lvl_ag.set(0.9)
         self.view.scale_sigma_edge.set(1.0)
         self.view.scale_low_thres_edge.set(0.1)
         self.view.scale_high_thres_edge.set(0.3)
-        self.view.scale_conf_lvl_edge.set(0.8)
+        self.view.scale_conf_lvl_edge.set(0.9)
         self.view.matches_found.set("None")
         self.view.btn_edge_detec_debugger["state"] = "disabled"
         self.view.btn_run_pyautogui["state"] = "disabled"
