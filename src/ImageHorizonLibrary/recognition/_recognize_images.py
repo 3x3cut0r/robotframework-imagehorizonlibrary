@@ -41,8 +41,13 @@ except Exception:  # pragma: no cover - graceful fallback when cv2 is missing
 import traceback
 
 
-from ..errors import ImageNotFoundException, InvalidImageException
-from ..errors import ReferenceFolderException
+from ..errors import (
+    ImageNotFoundException,
+    InvalidImageException,
+    ReferenceFolderException,
+    ScreenshotFolderException,
+    StrategyException,
+)
 
 
 class _RecognizeImages(object):
@@ -649,7 +654,12 @@ class _RecognizeImages(object):
                 try:
                     location = self._locate(reference_image, log_it=True)
                     break
-                except (InvalidImageException, ReferenceFolderException):
+                except (
+                    InvalidImageException,
+                    ReferenceFolderException,
+                    StrategyException,
+                    ScreenshotFolderException,
+                ):
                     # These indicate a permanent misconfiguration and should not
                     # be retried within this loop.
                     raise

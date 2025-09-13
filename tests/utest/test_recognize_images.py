@@ -241,6 +241,28 @@ class TestRecognizeImages(TestCase):
             self.assertEqual(result, (0, 0, 1.0, 1.0))
             self.assertEqual(len(run_on_failure.mock_calls), 0)
 
+    def test_wait_for_propagates_strategy_exception(self):
+        from ImageHorizonLibrary import StrategyException
+
+        run_on_failure = MagicMock()
+        with patch(self._locate, side_effect=StrategyException('fail')) as locate, \
+             patch.object(self.lib, '_run_on_failure', run_on_failure):
+            with self.assertRaises(StrategyException):
+                self.lib.wait_for('my_picture', timeout=1)
+            self.assertEqual(locate.call_count, 1)
+            self.assertEqual(run_on_failure.call_count, 0)
+
+    def test_wait_for_propagates_screenshot_folder_exception(self):
+        from ImageHorizonLibrary import ScreenshotFolderException
+
+        run_on_failure = MagicMock()
+        with patch(self._locate, side_effect=ScreenshotFolderException('fail')) as locate, \
+             patch.object(self.lib, '_run_on_failure', run_on_failure):
+            with self.assertRaises(ScreenshotFolderException):
+                self.lib.wait_for('my_picture', timeout=1)
+            self.assertEqual(locate.call_count, 1)
+            self.assertEqual(run_on_failure.call_count, 0)
+
     def test_set_keyword_on_failure_runs_custom_keyword(self):
         with patch('ImageHorizonLibrary.BuiltIn.run_keyword') as run_keyword:
             self.lib.set_keyword_on_failure('Log')
