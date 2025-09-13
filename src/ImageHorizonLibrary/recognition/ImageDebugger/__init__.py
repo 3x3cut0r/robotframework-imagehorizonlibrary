@@ -7,7 +7,11 @@ from .image_debugger_controller import UILocatorController
 class ImageDebugger:
     """Wrapper that launches the image debugger GUI."""
 
-    def __init__(self, image_horizon_instance, minimize=False):
+    def __init__(self, image_horizon_instance, minimize=False, dialog_default_dir=None):
         """Create the debugger and start the main UI loop."""
-        app = UILocatorController(image_horizon_instance, minimize=minimize)
+        app = UILocatorController(
+            image_horizon_instance,
+            minimize=minimize,
+            dialog_default_dir=dialog_default_dir,
+        )
         app.main()

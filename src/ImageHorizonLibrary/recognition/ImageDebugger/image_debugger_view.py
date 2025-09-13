@@ -57,9 +57,13 @@ class UILocatorView(Tk):
         frame_import_ref_image.pack(side=TOP, padx=2, pady=2, fill=X)
         Label(frame_import_ref_image, text="Reference directory path:").pack(side=TOP, anchor=W)
         self.ref_dir_path = StringVar(frame_import_ref_image)
-        self.label_ref_dir_path = Label(frame_import_ref_image, textvariable=self.ref_dir_path, fg='green')
-        self.label_ref_dir_path.pack(side=TOP, anchor=W)
-        
+
+        frame_ref_dir = Frame(frame_import_ref_image)
+        frame_ref_dir.pack(side=TOP, anchor=W)
+        self.label_ref_dir_path = Label(frame_ref_dir, textvariable=self.ref_dir_path, fg='green')
+        self.label_ref_dir_path.pack(side=LEFT, anchor=W)
+        Button(frame_ref_dir, text='Browse', command=self.controller.change_reference_folder).pack(side=LEFT, padx=(5, 0))
+
         self.combobox_needle_img_name = ttk.Combobox(frame_import_ref_image, width=70, state="readonly")
         self.controller.load_needle_image_names(self.combobox_needle_img_name)
         self.combobox_needle_img_name.pack(pady=(0,0), side=LEFT, anchor=W)
