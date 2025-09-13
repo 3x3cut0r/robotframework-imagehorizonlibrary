@@ -6,7 +6,7 @@
   "configurations": [
     {
       "name": "Python: Aktuelle Datei",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
@@ -15,7 +15,7 @@
     },
     {
       "name": "libdoc",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "robot.libdoc",
       "args": [
