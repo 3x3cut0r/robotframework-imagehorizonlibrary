@@ -678,7 +678,7 @@ class _RecognizeImages(object):
         )
         return location
 
-    def debug_image(self, reference_folder=None, minimize=False):
+    def debug_image(self, reference_folder=None, minimize=False, dialog_default_dir=None):
         """Halts the test execution and opens the image debugger UI.
 
         Whenever you encounter problems with the recognition accuracy of a reference image,
@@ -708,6 +708,10 @@ class _RecognizeImages(object):
         ``minimize`` to ``True`` to minimise it. When visible, the window's area
         is masked so that matches inside the debugger are ignored.
 
+        ``dialog_default_dir`` specifies the folder shown when the directory
+        chooser is opened and the current reference folder is invalid or not
+        accessible. If omitted, the user's home directory is used.
+
         The purpose of this keyword is *solely for debugging purposes*; don't
         use it in production!"""
         from .ImageDebugger import ImageDebugger
@@ -716,7 +720,11 @@ class _RecognizeImages(object):
         if reference_folder is not None:
             self.set_reference_folder(reference_folder)
         try:
-            debug_app = ImageDebugger(self, minimize=minimize)
+            debug_app = ImageDebugger(
+                self,
+                minimize=minimize,
+                dialog_default_dir=dialog_default_dir,
+            )
         finally:
             if reference_folder is not None:
                 self.set_reference_folder(previous_reference_folder)

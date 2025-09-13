@@ -8,18 +8,20 @@ from pathlib import Path
 import os, glob
 import pyperclip
 import webbrowser
+from tkinter import filedialog
 from robot.api import logger as LOGGER
 
 
 class UILocatorController:
     """Connects debugger model and view components."""
 
-    def __init__(self, image_horizon_instance, minimize=False):
+    def __init__(self, image_horizon_instance, minimize=False, dialog_default_dir=None):
         """Create controller and associated model/view objects."""
         self.image_container = ImageContainer()
         self.model = UILocatorModel()
         self.image_horizon_instance = image_horizon_instance
         self._minimize = minimize
+        self._dialog_default_dir = dialog_default_dir
         self.view = UILocatorView(self, self.image_container, self.image_horizon_instance)
         self.best_score = None
 
@@ -59,6 +61,32 @@ class UILocatorController:
             self.combobox = combobox
         self.combobox['values']=list_needle_images_names
         self.combobox.set('__ __ __ Select a reference image __ __ __')
+
+    def change_reference_folder(self):
+        """Open a dialog to select a new reference folder."""
+        current = self.image_horizon_instance.reference_folder
+        if not (
+            current
+            and os.path.isdir(current)
+            and os.access(current, os.R_OK | os.X_OK)
+        ):
+            initial = self._dialog_default_dir or str(Path.home())
+        else:
+            initial = current
+
+        new_dir = filedialog.askdirectory(initialdir=initial)
+        if new_dir:
+            try:
+                self.image_horizon_instance.set_reference_folder(new_dir)
+            except Exception as exc:
+                LOGGER.error(exc)
+                self.view.label_statusBar.config(fg='RED')
+                self.view.hint_msg.set(str(exc))
+            else:
+                self.view.ref_dir_path.set(
+                    self.image_horizon_instance.reference_folder
+                )
+                self.refresh()
 
     def reset_images(self):
         """Reset image placeholders in the view."""
