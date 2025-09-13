@@ -78,7 +78,7 @@ The filters have the following effects:
 
 Example:
 
-```
+```robotframework
 | Set Strategy | edge | edge_preprocess=gaussian | edge_kernel_size=5 |
 ```
 
@@ -98,7 +98,7 @@ detector:
 
 Additional usage examples for the `edge` strategy:
 
-```
+```robotframework
 | # use with auto-detected parameters
 | Set Strategy | edge |
 | Click Image | button.PNG |
@@ -112,7 +112,7 @@ Keywords such as `Wait For`, `Locate`, and `Locate All` return not only the matc
 but also the correlation score and an optional detected scaling factor
 describing the match quality. The typical return signature is:
 
-```
+```robotframework
 ${x} ${y} ${score} ${scale}= | Wait For | example.png | timeout=5 |
 ```
 
@@ -122,7 +122,7 @@ The `score` ranges from `-1` (no correlation) to `1` (perfect match) and the
 ImageHorizonLibrary searches only at scale `1.0` by default. To enable
 multi-scale matching (for example `0.8`–`1.2`), use:
 
-```
+```robotframework
 | Set Scale Range | 0.8 | 1.2 | 9 |
 ```
 
@@ -193,7 +193,7 @@ might not work on Ubuntu when run in VirtualBox on Windows.
 
 If you have pip, installation is straightforward:
 
-```
+```bash
 python3 -m pip install robotframework-imagehorizonlibrary
 ```
 
@@ -202,7 +202,7 @@ This will automatically install dependencies as well as their dependencies.
 If you want to use the optional Image Debugger that relies on matplotlib,
 install the library with the `debug` extra:
 
-```
+```bash
 python3 -m pip install "robotframework-imagehorizonlibrary[debug]"
 ```
 
@@ -216,7 +216,7 @@ commands above to install it.
 _NOTICE_ ImageHorizonLibrary does not currently work with XCode v.8. Please use a previous version.
 You additionally need to install these for `pyautogui`:
 
-```
+```bash
 python3 -m pip install pyobjc-core pyobjc
 ```
 
@@ -226,13 +226,13 @@ For these, you need to install [XCode](https://developer.apple.com/xcode/downloa
 
 You additionally need to install these for `pyautogui`:
 
-```
+```bash
 sudo apt-get install python3-dev python3-xlib
 ```
 
 You might also need, depending on your Python distribution, to install:
 
-```
+```bash
 sudo apt-get install python3-tk
 ```
 
@@ -241,7 +241,7 @@ manually to the virtual environment for `pyautogui`:
 
 - Fetch the source distribution
 - Install with:
-  ```
+  ```bash
   python3 -m pip install python-xlib-<latest version>.tar.gz
   ```
 
@@ -250,13 +250,13 @@ manually to the virtual environment for `pyautogui`:
 To create a wheel from the current sources without installing runtime
 dependencies, first ensure the build requirements are available:
 
-```
+```bash
 python3 -m pip install --upgrade pip setuptools wheel packaging
 ```
 
 Then build the wheel:
 
-```
+```bash
 pip wheel . --no-deps
 ```
 
@@ -284,7 +284,7 @@ docker rm $CID
 
 ## Running unit tests
 
-```
+```bash
 python3 tests/utest/run_tests.py [verbosity=2]
 ```
 
@@ -295,7 +295,7 @@ OpenCV is used because these tests are testing also confidence level.
 Browser is used by Eel for cross-platform GUI demo application.
 `scrot` is used for capturing screenshots.
 
-```
+```bash
 sudo apt install scrot chromium-browser
 python3 -m pip install opencv-python eel
 export RUN_GUI_TESTS=1
@@ -306,7 +306,7 @@ python3 tests/atest/run_tests.py
 
 To regenerate documentation (`docs/ImageHorizonLibrary.html`), use this command:
 
-```
+```bash
 python3 -m robot.libdoc -P ./src ImageHorizonLibrary docs/ImageHorizonLibrary.html
 cp docs/ImageHorizonLibrary.html docs/index.html
 ```
