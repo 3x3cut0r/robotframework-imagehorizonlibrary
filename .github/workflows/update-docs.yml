@@ -18,9 +18,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install robotframework
           python -m pip install -r requirements.txt
+      - name: Xvfb installieren
+        run: sudo apt-get update && sudo apt-get install -y xvfb
       - name: Dokumentation generieren
         run: |
-          python -m robot.libdoc -P ./src ImageHorizonLibrary docs/ImageHorizonLibrary.html
+          xvfb-run --auto-servernum python -m robot.libdoc -P ./src ImageHorizonLibrary docs/ImageHorizonLibrary.html
           cp docs/ImageHorizonLibrary.html docs/index.html
       - name: Änderungen committen
         run: |
