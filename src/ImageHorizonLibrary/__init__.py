@@ -7,10 +7,17 @@ from .errors import *  # import errors before checking dependencies!
 
 try:
     import pyautogui as ag
-except ImportError:
+except KeyError as err:
+    if err.args and err.args[0] == "DISPLAY":
+        raise ImageHorizonLibraryError(
+            "The DISPLAY environment variable is missing. "
+            "Use Xvfb or set the DISPLAY variable to run GUI-based tests."
+        ) from err
+    raise
+except ImportError as err:
     raise ImageHorizonLibraryError(
-        "There is something wrong with pyautogui or " "it is not installed."
-    )
+        "There is something wrong with pyautogui or it is not installed."
+    ) from err
 
 try:
     from robot.api import logger as LOGGER
