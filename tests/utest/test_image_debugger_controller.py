@@ -1,6 +1,8 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from types import SimpleNamespace
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 mock_pyautogui = MagicMock()
 mock_tk = SimpleNamespace(
@@ -62,6 +64,24 @@ class FakeView:
 
     def winfo_height(self):
         return self._h
+
+
+class DummyCombobox:
+    def __init__(self):
+        self._values = None
+        self.selected = None
+
+    def __setitem__(self, key, value):
+        if key != "values":
+            raise KeyError(key)
+        self._values = value
+
+    @property
+    def values(self):
+        return self._values
+
+    def set(self, value):
+        self.selected = value
 
 
 class TestTakeScreenshot(TestCase):
@@ -130,3 +150,38 @@ class TestTakeScreenshot(TestCase):
         self.assertEqual(view.state_calls, [])
         mock_draw.assert_called_once_with('img')
         mock_draw.return_value.rectangle.assert_called_once()
+
+
+class TestLoadNeedleImageNames(TestCase):
+    def _controller(self, reference_folder):
+        ctrl = UILocatorController.__new__(UILocatorController)
+        ctrl.image_horizon_instance = SimpleNamespace(reference_folder=reference_folder)
+        ctrl.view = SimpleNamespace()
+        return ctrl
+
+    def test_handles_missing_reference_folder(self):
+        ctrl = self._controller(reference_folder=None)
+        combo = DummyCombobox()
+
+        ctrl.load_needle_image_names(combo)
+
+        self.assertEqual(combo.values, [])
+        self.assertEqual(
+            combo.selected,
+            "__ __ __ Select a reference image __ __ __",
+        )
+
+    def test_populates_valid_directory(self):
+        with TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "first.png").touch()
+            Path(tmpdir, "second.png").touch()
+            ctrl = self._controller(reference_folder=tmpdir)
+            combo = DummyCombobox()
+
+            ctrl.load_needle_image_names(combo)
+
+            self.assertCountEqual(combo.values, ["first.png", "second.png"])
+            self.assertEqual(
+                combo.selected,
+                "__ __ __ Select a reference image __ __ __",
+            )

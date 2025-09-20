@@ -5,7 +5,8 @@ from .image_debugger_view import UILocatorView
 from .template_matching_strategies import Pyautogui, Cv2
 from .image_manipulation import ImageContainer, ImageFormat
 from pathlib import Path
-import os, glob
+import glob
+import os
 import pyperclip
 import webbrowser
 from tkinter import filedialog
@@ -53,14 +54,30 @@ class UILocatorController:
 
     def load_needle_image_names(self, combobox=None):
         """Populate combobox with available reference images."""
-        list_needle_images_names = []
-        pattern = os.path.join(self.image_horizon_instance.reference_folder, "*.png")
-        for needle_img_name in glob.glob(pattern):
-            list_needle_images_names.append(os.path.basename(needle_img_name))
-        if combobox:
+        if combobox is not None:
             self.combobox = combobox
-        self.combobox['values']=list_needle_images_names
-        self.combobox.set('__ __ __ Select a reference image __ __ __')
+        elif not hasattr(self, "combobox"):
+            return
+
+        reference_dir = self.image_horizon_instance.reference_folder
+        try:
+            reference_dir = os.fspath(reference_dir)
+        except TypeError:
+            reference_dir = None
+
+        list_needle_images_names = []
+        if reference_dir and os.path.isdir(reference_dir):
+            pattern = os.path.join(reference_dir, "*.png")
+            for needle_img_name in glob.glob(pattern):
+                list_needle_images_names.append(os.path.basename(needle_img_name))
+        elif reference_dir:
+            LOGGER.warn(
+                "Reference folder '%s' is not accessible; no images loaded.",
+                reference_dir,
+            )
+
+        self.combobox["values"] = list_needle_images_names
+        self.combobox.set("__ __ __ Select a reference image __ __ __")
 
     def change_reference_folder(self):
         """Open a dialog to select a new reference folder."""
