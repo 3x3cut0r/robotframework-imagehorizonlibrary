@@ -33,10 +33,13 @@ class Pyautogui(TemplateMatchingStrategy):
 
     def find_num_of_matches(self):
         """Return coordinates of all matches using PyAutoGUI."""
+        haystack_image = self.image_container.get_haystack_image_orig_size(
+            ImageFormat.PILIMG
+        )
         matches = list(
             self.image_horizon_instance._locate_all(
                 self.image_container.get_needle_image(ImageFormat.PATHSTR),
-                self.image_container.get_haystack_image_orig_size(ImageFormat.PILIMG),
+                haystack_image,
             )
         )
         # Each match is ``(location, score, scale)``; keep only location and
@@ -46,6 +49,15 @@ class Pyautogui(TemplateMatchingStrategy):
             (score for _, score, _ in matches if score is not None),
             default=None,
         )
+        try:
+            _, best_score, _ = self.image_horizon_instance._try_locate(
+                self.image_container.get_needle_image(ImageFormat.PATHSTR),
+                haystack_image=haystack_image,
+            )
+        except Exception:
+            best_score = None
+        if best_score is not None:
+            self.best_score = best_score
         return self.coord
 
 
@@ -59,10 +71,13 @@ class Cv2(TemplateMatchingStrategy):
 
     def find_num_of_matches(self):
         """Return coordinates of all matches using OpenCV."""
+        haystack_image = self.image_container.get_haystack_image_orig_size(
+            ImageFormat.NUMPYARRAY
+        )
         matches = list(
             self.image_horizon_instance._locate_all(
                 self.image_container.get_needle_image(ImageFormat.PATHSTR),
-                self.image_container.get_haystack_image_orig_size(ImageFormat.NUMPYARRAY),
+                haystack_image,
             )
         )
         # Keep only location information for highlighting/plotting and store
@@ -72,4 +87,13 @@ class Cv2(TemplateMatchingStrategy):
             (score for _, score, _ in matches if score is not None),
             default=None,
         )
+        try:
+            _, best_score, _ = self.image_horizon_instance._try_locate(
+                self.image_container.get_needle_image(ImageFormat.PATHSTR),
+                haystack_image=haystack_image,
+            )
+        except Exception:
+            best_score = None
+        if best_score is not None:
+            self.best_score = best_score
         return self.coord
