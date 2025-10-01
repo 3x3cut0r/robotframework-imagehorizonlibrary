@@ -118,6 +118,8 @@ class TestMouse(TestCase):
             self.lib.drag_to(10)
         with self.assertRaises(MouseException):
             self.lib.drag_to(10, 20, duration='invalid')
+        with self.assertRaises(MouseException):
+            self.lib.drag_to(10, 20, mouse_down_up='invalid')
 
     def test_drag_rel(self):
         self.lib.drag_rel(5, -5)
@@ -139,6 +141,8 @@ class TestMouse(TestCase):
             self.lib.drag_rel(5)
         with self.assertRaises(MouseException):
             self.lib.drag_rel(5, 5, duration='invalid')
+        with self.assertRaises(MouseException):
+            self.lib.drag_rel(5, 5, mouse_down_up='invalid')
 
     def test_scroll(self):
         self.lib.scroll('3')
@@ -149,11 +153,17 @@ class TestMouse(TestCase):
         self.assertEqual(self.mock.scroll.mock_calls, [call(-5, x=10, y=20)])
         self.mock.reset_mock()
 
+        self.lib.scroll(7, ('30', '40', '0.9'))
+        self.assertEqual(self.mock.scroll.mock_calls, [call(7, x=30, y=40)])
+        self.mock.reset_mock()
+
         from ImageHorizonLibrary import MouseException
         with self.assertRaises(MouseException):
             self.lib.scroll('foo')
         with self.assertRaises(MouseException):
             self.lib.scroll(1, 2)
+        with self.assertRaises(MouseException):
+            self.lib.scroll(1, (5,))
 
     def test_horizontal_scroll(self):
         self.lib.scroll_horizontally('2')
@@ -177,8 +187,14 @@ class TestMouse(TestCase):
         self.lib.set_global_pause('0.25')
         self.assertEqual(self.mock.PAUSE, 0.25)
 
+        self.lib.set_global_pause(0)
+        self.assertEqual(self.mock.PAUSE, 0.0)
+
         self.lib.set_failsafe('False')
         self.assertFalse(self.mock.FAILSAFE)
+
+        self.lib.set_failsafe('Yes')
+        self.assertTrue(self.mock.FAILSAFE)
 
         from ImageHorizonLibrary import MouseException
         with self.assertRaises(MouseException):
