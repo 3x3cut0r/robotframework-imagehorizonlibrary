@@ -162,6 +162,14 @@ Generated keyword documentation is available in
 | Mouse Down                  | Press and hold a mouse button.                                                                                                                                                             |
 | Mouse Up                    | Release a previously pressed mouse button.                                                                                                                                                 |
 | Move To                     | Move the mouse pointer to absolute screen coordinates.                                                                                                                                     |
+| Move Rel                    | Move the mouse pointer relative to its current position.                                                                                           |
+| Drag To                     | Drag the mouse pointer to absolute screen coordinates while optionally holding a button.                                                           |
+| Drag Rel                    | Drag the mouse pointer relative to its current position.                                                                                           |
+| Scroll                      | Scroll vertically by a number of clicks.                                                                                                           |
+| Scroll Horizontally         | Scroll horizontally by a number of clicks.                                                                                                         |
+| Scroll Vertically           | Scroll vertically by a number of clicks.                                                                                                           |
+| Set Global Pause            | Set the global PyAutoGUI pause between actions.                                                                                                    |
+| Set Failsafe                | Enable or disable the PyAutoGUI failsafe corner detection.                                                                                        |
 | Pause                       | Display a modal dialog to temporarily halt test execution.                                                                                                                                 |
 | Press Combination           | Press multiple keyboard keys simultaneously.                                                                                                                                               |
 | Reset Confidence            | Resets the confidence level to the library default.                                                                                                                                        |
