@@ -154,7 +154,7 @@ class _RecognizeImages(object):
         """
         try:
             x, y, score, scale = self.wait_for(reference_image, timeout)
-        except ImageNotFoundException as e:
+        except (ImageNotFoundException, ag.ImageNotFoundException) as e:
             LOGGER.info(e)
             raise
         LOGGER.info(
@@ -189,7 +189,7 @@ class _RecognizeImages(object):
         """
         try:
             x, y, score, scale = self.wait_for(reference_image, timeout)
-        except ImageNotFoundException as e:
+        except (ImageNotFoundException, ag.ImageNotFoundException) as e:
             LOGGER.info(e)
             raise
         self._click_to_the_direction_of(
@@ -568,7 +568,7 @@ class _RecognizeImages(object):
             try:
                 self._locate(reference_image, log_it=True)
                 return True
-            except ImageNotFoundException:
+            except (ImageNotFoundException, ag.ImageNotFoundException):
                 return False
 
     def locate(self, reference_image):
@@ -591,7 +591,7 @@ class _RecognizeImages(object):
         """
         try:
             return self._locate(reference_image)
-        except ImageNotFoundException as e:
+        except (ImageNotFoundException, ag.ImageNotFoundException) as e:
             LOGGER.info(e)
             raise
 
